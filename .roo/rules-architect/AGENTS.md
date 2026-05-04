@@ -1,0 +1,21 @@
+# Project Architecture Rules (Non-Obvious Only)
+
+- Providers MUST be stateless - hidden caching layer assumes this
+- Webview and extension communicate through specific IPC channel patterns only
+- Database migrations cannot be rolled back - forward-only by design
+- React hooks required because external state libraries break webview isolation
+- Monorepo packages have circular dependency on types package (intentional)
+- Core business logic is completely independent of UI - when replacing the GUI, only modify `gui/` and `cmd/grout-gui/` (or create a new equivalent)
+- The `sync/` package handles directory-based saves (e.g., PPSSPP) differently from file-based saves
+- The `cache/` package uses SQLite with WAL journal mode for better concurrency
+- The `sync/` package uses a complex conflict resolution system for save files
+- `internal/config.go` has special handling for DurationSeconds that marshals to/from JSON as whole seconds
+- `cache/manager.go` has special bulk load mode optimizations for SQLite performance
+- Configuration files are loaded from current working directory (not hardcoded paths)
+- The `config.json` and `save_slots.json` files are in the working directory
+- Save sync requires `Host.DeviceID` for client identification
+- Platform-specific code in `cfw/` is tailored for custom firmware; will need adaptation for Linux/Flatpak
+- All core packages (`romm/`, `internal/`, `cache/`, `sync/`) are goroutine-safe - use `sync.Mutex` or `atomic` operations where needed
+- Background cache sync (`cache.NewBackgroundSync()`) runs in its own goroutine; UI must not block it
+- Save sync (`sync.StartSync()`) is async; handle errors and completion callbacks in the UI layer
+- **Important**: Run `nix develop` before executing any Go development commands
