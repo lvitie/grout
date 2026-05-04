@@ -5,6 +5,7 @@ import (
 	"grout/desktop"
 	"grout/romm"
 	"strings"
+	"grout/desktop/widgets"
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
@@ -31,12 +32,26 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 	listBox.AddCSSClass("navigation-sidebar")
 
 	for _, g := range s.games {
-		row := adw.NewActionRow()
-		row.SetTitle(g.Name)
-		row.SetSubtitle(g.FsName)
-		row.SetSelectable(true)
+		row := widgets.NewGameRow(g)
 		listBox.Append(row)
 	}
+
+	listBox.SetFilterFunc(func(row *gtk.ListBoxRow) bool {
+		text := strings.ToLower(searchBar.Text())
+		if text == "" {
+			return true
+		}
+		
+		// We need to retrieve the game from the row.
+		// Since we used NewGameRow, we can cast it if we exported the game field,
+		// or just use the title/subtitle of the ActionRow.
+		if actionRow, ok := row.Child().(*adw.ActionRow); ok {
+			title := strings.ToLower(actionRow.Title())
+			subtitle := strings.ToLower(actionRow.Subtitle())
+			return strings.Contains(title, text) || strings.Contains(subtitle, text)
+		}
+		return true
+	})
 
 	listBox.ConnectRowActivated(func(row *gtk.ListBoxRow) {
 		idx := row.Index()
@@ -49,21 +64,7 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 	searchBar := gtk.NewSearchEntry()
 	searchBar.SetPlaceholderText("Search games...")
 	searchBar.ConnectChanged(func() {
-		text := strings.ToLower(searchBar.Text())
-		row := listBox.FirstChild()
-		i := 0
-		for row != nil {
-			if lbRow, ok := row.(*gtk.ListBoxRow); ok {
-				game := s.games[i]
-				visible := text == "" || 
-					strings.Contains(strings.ToLower(game.Name), text) ||
-					strings.Contains(strings.ToLower(game.FsName), text)
-				
-				lbRow.SetVisible(visible)
-				i++
-			}
-			row = row.NextSibling()
-		}
+		listBox.InvalidateFilter()
 	})
 
 	scrolled := gtk.NewScrolledWindow()

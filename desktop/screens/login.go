@@ -2,6 +2,8 @@ package screens
 
 import (
 	"grout/desktop"
+	"grout/romm"
+	"grout/desktop/dialogs"
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
@@ -33,6 +35,37 @@ func (s *LoginScreen) Build(router *desktop.Router) gtk.Widgetter {
 	loginBtn := gtk.NewButtonWithLabel("Login")
 	loginBtn.SetMarginTop(20)
 	loginBtn.AddCSSClass("suggested-action")
+
+	loginBtn.ConnectClicked(func() {
+		baseURL := urlRow.Text()
+		username := userRow.Text()
+		password := passRow.Text()
+
+		host := romm.Host{
+			URL:      baseURL,
+			Username: username,
+			Password: password,
+		}
+
+		client := romm.NewClientFromHost(host, 10)
+		if err := client.ValidateConnection(); err != nil {
+			dialogs.ShowError(router.Window(), "Connection Failed", err.Error())
+			return
+		}
+
+		if err := client.Login(username, password); err != nil {
+			dialogs.ShowError(router.Window(), "Login Failed", err.Error())
+			return
+		}
+
+		// Save to state and config
+		router.State().SetHost(&host)
+		cfg := router.State().GetConfig()
+		cfg.Hosts = []romm.Host{host}
+		cfg.Save()
+
+		router.Navigate(NewPlatformSelectionScreen(router))
+	})
 
 	box := gtk.NewBox(gtk.OrientationVertical, 10)
 	box.SetMarginStart(20)

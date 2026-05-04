@@ -41,7 +41,6 @@
 
           buildPhase = ''
             export HOME=$TMP
-            export HOME=$TMP
             go build -o grout ./cmd/grout-desktop
           '';
 
@@ -103,32 +102,6 @@
           '';
         };
 
-        # Development shell with cross-compilation tools
-        devShells.cross = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            go_1_25
-            go-task
-            docker
-            golangci-lint
-            statix
-            pkg-config
-            gtk4
-            libadwaita
-            gobject-introspection
-            qemu
-          ];
-
-          shellHook = ''
-            echo "✓ Grout cross-compilation environment loaded"
-            echo ""
-            echo "Use these tasks:"
-            echo "  task build:arm64                # Cross-compile for ARM64"
-            echo "  task build:arm32                # Cross-compile for ARM32"
-            echo "  task all-arm64                  # Build and package for all ARM64 platforms"
-            echo ""
-            echo "Note: Docker must be running for cross-compilation"
-          '';
-        };
       }
     );
 }

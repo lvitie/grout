@@ -1,7 +1,6 @@
 package desktop
 
 import (
-	"grout/desktop/screens"
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
@@ -9,24 +8,22 @@ import (
 type Router struct {
 	window *adw.ApplicationWindow
 	nav    *adw.NavigationView
+	state  *AppState
 }
 
 type Screen interface {
 	Build(router *Router) gtk.Widgetter
 }
 
-func NewRouter(window *adw.ApplicationWindow) *Router {
+func NewRouter(window *adw.ApplicationWindow, state *AppState) *Router {
 	nav := adw.NewNavigationView()
 	window.SetContent(nav)
 
 	return &Router{
 		window: window,
 		nav:    nav,
+		state:  state,
 	}
-}
-
-func (r *Router) ShowFirstScreen() {
-	r.Navigate(screens.NewLoginScreen(r))
 }
 
 func (r *Router) Navigate(screen Screen) {
@@ -38,4 +35,12 @@ func (r *Router) Navigate(screen Screen) {
 
 func (r *Router) Back() {
 	r.nav.Pop()
+}
+
+func (r *Router) Window() *gtk.Window {
+	return &r.window.Window
+}
+
+func (r *Router) State() *AppState {
+	return r.state
 }

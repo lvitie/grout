@@ -85,9 +85,17 @@ github.com/holoplot/go-evdev             # Controller input (promote from indire
 
 ---
 
-## Phase 1: Platform Abstraction Layer ✅ DONE
+## Phase 1: Platform Abstraction Layer
 
 Replace `cfw/` with a `platform/` package that provides the same interfaces but for Linux desktop.
+
+- [x] Create `platform/platform.go` with `Platform` interface
+- [x] Create `platform/linux.go` with `LinuxDesktop` implementation (XDG paths)
+- [x] Implement `ScanRoms()` for Linux directory layout
+- [x] Implement artwork directory methods
+- [x] Update `sync/flow.go` to import `grout/platform` instead of `grout/cfw`
+- [x] Update `sync/roms.go` to import `grout/platform` instead of `grout/cfw`
+- [x] **Delete `platform/cfw.go`** — imports deleted `grout/cfw` package, will not compile
 
 ### 1.1 New `platform/` package
 
@@ -141,7 +149,19 @@ Replace direct `cfw.GetCFW()`, `cfw.BaseSavePath()`, `cfw.ScanRoms()` calls with
 
 ---
 
-## Phase 2: New GUI Architecture (Skeleton ✅)
+## Phase 2: New GUI Architecture
+
+- [x] Create `cmd/grout-desktop/main.go` entry point
+- [x] Create `desktop/router.go` with `adw.NavigationView`
+- [x] Create `desktop/controller/controller.go` skeleton with channel + `glib.IdleAdd` bridge
+- [x] Move first-screen wiring from `router.go` to `main.go` (avoid `router.go` importing `screens`)
+- [x] Implement actual evdev device discovery (scan `/dev/input/event*` for gamepads)
+- [x] Implement `controller/mapping.go` — evdev event codes → Action mapping
+- [x] Create `desktop/state.go` — shared reactive app state (config, host, platforms)
+- [x] Create `desktop/widgets/game_row.go` — custom list row with artwork thumbnail
+- [x] Create `desktop/widgets/progress_overlay.go` — download/sync overlay
+- [x] Create `desktop/dialogs/confirmation.go` — `adw.MessageDialog` wrapper
+- [x] Create `desktop/dialogs/error.go` — error display helper
 
 ### 2.1 Project structure
 
@@ -345,25 +365,67 @@ go func() {
 
 ---
 
-## Phase 3: Screen-by-Screen Migration ✅ DONE
+## Phase 3: Screen-by-Screen Migration
 
-### 3.1 Migration order (by dependency)
+### 3.1 Screen stubs created
 
-Each screen is independent — migrate in order of user flow:
+- [x] `login.go` — stub with URL, username, password fields
+- [x] `platform_selection.go` — stub with ListBox + settings button
+- [x] `game_list.go` — stub with ListBox + search entry
+- [x] `game_details.go` — stub
+- [x] `settings.go` — stub with switch rows and navigation
+- [x] `advanced_settings.go` — stub
+- [x] `tools_settings.go` — stub
+- [x] `collections.go` — stub
+- [x] `download.go` — stub
+- [x] `save_sync.go` — stub
+- [x] `info.go` — stub
+- [x] `update.go` — stub
 
-| Priority | Screen | GTK4 widget | Notes |
+### 3.2 Screens still needed
+
+- [ ] `search.go` — dedicated search screen (or merge into game_list header)
+- [ ] `game_options.go` — options menu for a single game
+- [ ] `game_qr.go` — QR code display
+- [ ] `game_filters.go` — filter/sort options
+- [ ] `general_settings.go` — language, display options
+- [ ] `collections_settings.go` — collection visibility toggles
+- [ ] `save_conflict.go` — conflict resolution dialog
+- [ ] `sync_menu.go` — sync hub
+- [ ] `synced_games.go` — list of synced games
+- [ ] `sync_history.go` — sync log
+- [ ] `save_mapping.go` — save slot mapping
+- [ ] `collection_platform.go` — platform selector within a collection
+- [ ] `platform_mapping.go` — directory-to-platform mapping
+- [ ] `bios_download.go` — BIOS file download
+- [ ] `artwork_sync.go` — artwork sync progress
+- [ ] `rebuild_cache.go` — cache rebuild UI
+- [ ] `server_address.go` — edit server URL
+
+### 3.3 Screens needing functional wiring (stubs exist but not connected to backend)
+
+- [x] `login.go` — wire login button to `romm.NewClient()` + `ValidateConnection()` + save config
+- [ ] `platform_selection.go` — wire to `cache.GetCacheManager().GetPlatforms()`
+- [ ] `game_list.go` — wire to `cache.GetCacheManager().GetPlatformGames()` + artwork loading
+- [x] `game_list.go` — replace manual `FirstChild()`/`NextSibling()` search with `listBox.SetFilterFunc()`
+- [ ] `game_details.go` — wire download button to actual download flow
+- [ ] `settings.go` — wire switch changes to `internal.SaveConfig()`
+
+### 3.4 Migration priority (by user flow)
+
+| Priority | Screen | GTK4 widget | Status |
 |---|---|---|---|
-| 1 | Login | `adw.EntryRow` + `adw.PasswordEntryRow` | ✅ DONE |
-| 2 | Platform Selection | `gtk.ListBox` + `adw.ActionRow` | ✅ DONE |
-| 3 | Game List | `gtk.ListView` + factory | ✅ DONE |
-| 4 | Game Details | `adw.Clamp` + cover image + metadata | ✅ DONE |
-| 5 | Settings | `adw.PreferencesPage` | ✅ DONE |
-| 6 | Download progress | `adw.StatusPage` + `gtk.ProgressBar` | ✅ DONE |
-| 7 | Search | `gtk.SearchEntry` + filter | ✅ DONE |
-| 8 | Save sync screens | `adw.StatusPage` + progress | ✅ DONE |
-| 9 | Collections | `gtk.ListBox` | ✅ DONE |
-| 10 | Remaining settings | `adw.PreferencesPage` | ✅ DONE |
-| 11 | Misc | Various | ✅ DONE |
+| 1 | Login | `adw.EntryRow` + `adw.PasswordEntryRow` | Stub |
+| 2 | Platform Selection | `gtk.ListBox` + `adw.ActionRow` | Stub |
+| 3 | Game List | `gtk.ListView` + factory | Stub |
+| 4 | Game Details | `adw.Clamp` + cover image + metadata | Stub |
+| 5 | Settings | `adw.PreferencesPage` | Stub |
+| 6 | Download progress | `adw.StatusPage` + `gtk.ProgressBar` | Stub |
+| 7 | Search | `gtk.SearchEntry` + filter | Not started |
+| 8 | Save sync screens | `adw.StatusPage` + progress | Stub |
+| 9 | Collections | `gtk.ListBox` | Stub |
+| 10 | Remaining settings | `adw.PreferencesPage` | Not started |
+| 11 | Misc | Various | Not started |
 
 ### 3.2 gabagool → GTK4 widget mapping
 
@@ -382,7 +444,13 @@ Each screen is independent — migrate in order of user flow:
 
 ---
 
-## Phase 4: Flatpak Packaging ✅ DONE
+## Phase 4: Flatpak Packaging
+
+- [x] Create `app.romm.Grout.yaml` manifest
+- [ ] Add Go SDK module to Flatpak manifest (needed for build inside Flatpak sandbox)
+- [ ] Test Flatpak build end-to-end
+- [ ] Add `.desktop` file for Flatpak app entry
+- [ ] Add app icon (SVG) for Flatpak
 
 ### 4.1 Flatpak manifest
 
@@ -421,7 +489,14 @@ modules:
 
 ---
 
-## Phase 5: Build System Updates ✅ DONE
+## Phase 5: Build System Updates
+
+- [x] Update `flake.nix` — SDL2 deps → GTK4 + libadwaita + gobject-introspection
+- [x] Update `go.mod` — add gotk4, gotk4-adwaita, go-evdev
+- [x] Remove gabagool, go-sdl2, certifiable from `go.mod`
+- [x] Fix duplicate `export HOME=$TMP` in `flake.nix` buildPhase (line 44)
+- [ ] Verify `nix build` compiles successfully
+- [ ] Verify `nix develop` shell loads all GTK4 deps
 
 ### 5.1 flake.nix changes
 
@@ -470,9 +545,11 @@ buildInputs = with pkgs; [
 
 ---
 
-## Phase 6: Logger Migration ✅ DONE
+## Phase 6: Logger Migration
 
-`gaba.GetLogger()` is used throughout — not just in UI code but referenced in AGENTS.md as the project logger. Replace with stdlib `log/slog`:
+- [x] Create `internal/logger.go` with `InitLogger()` and `GetLogger()`
+- [x] Replace all `gaba.GetLogger()` calls with `internal.GetLogger()` (~50 call sites)
+- [x] Update AGENTS.md to reference `internal.GetLogger()`
 
 ```go
 // internal/logger.go
@@ -498,22 +575,22 @@ func GetLogger() *slog.Logger {
 }
 ```
 
-Then find-and-replace `gaba.GetLogger()` → `internal.GetLogger()` across the codebase.
-
 ---
 
-## Phase 7: Cleanup ✅ DONE
+## Phase 7: Cleanup
 
-1. Delete `ui/`, `app/`, `cfw/`, `gui/`, `cmd/grout-gui/`
-2. Run `go mod tidy` to drop gabagool + SDL2 + transitive deps
-3. Update `AGENTS.md`:
-   - Remove gabagool references
-   - Update build commands (no SDL2)
-   - Document new `desktop/` package structure
-   - Update logger guidance
-   - Remove CFW references
-4. Update `flake.nix` — swap SDL2 for GTK4/Adwaita
-5. Update CI/CD for Flatpak builds
+- [x] Delete `ui/` (39 gabagool screen files)
+- [x] Delete `app/` (router, transitions, setup, state)
+- [x] Delete `cfw/` (11 firmware subdirectories + 6 files)
+- [x] Delete `cmd/grout-gui/`
+- [x] Delete `gui/`
+- [x] Run `go mod tidy` to drop gabagool + SDL2 + transitive deps
+- [x] Update `AGENTS.md` — remove gabagool/CFW refs, document new structure
+- [x] Update `flake.nix` — swap SDL2 for GTK4/Adwaita
+- [x] **Delete `platform/cfw.go`** — imports deleted `grout/cfw`, won't compile
+- [x] Remove ARM cross-compilation shell from `flake.nix` (no longer targeting handhelds)
+- [ ] Update CI/CD for Flatpak builds
+- [ ] Update `README.md` — reflect desktop-only scope
 
 ---
 
