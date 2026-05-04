@@ -345,7 +345,7 @@ go func() {
 
 ---
 
-## Phase 3: Screen-by-Screen Migration (In Progress ⚠️)
+## Phase 3: Screen-by-Screen Migration ✅ DONE
 
 ### 3.1 Migration order (by dependency)
 
@@ -357,13 +357,13 @@ Each screen is independent — migrate in order of user flow:
 | 2 | Platform Selection | `gtk.ListBox` + `adw.ActionRow` | ✅ DONE |
 | 3 | Game List | `gtk.ListView` + factory | ✅ DONE |
 | 4 | Game Details | `adw.Clamp` + cover image + metadata | ✅ DONE |
-| 5 | Settings | `adw.PreferencesPage` | Natural fit for Adwaita |
-| 6 | Download progress | `adw.StatusPage` + `gtk.ProgressBar` | Overlay pattern |
-| 7 | Search | `gtk.SearchEntry` + filter | Integrate into game list header |
-| 8 | Save sync screens | `adw.StatusPage` + progress | 5 related screens |
-| 9 | Collections | `gtk.ListBox` | Same pattern as platforms |
-| 10 | Remaining settings | `adw.PreferencesPage` | General, Advanced, Tools, Collections |
-| 11 | Misc | Various | QR, BIOS, artwork sync, info, update |
+| 5 | Settings | `adw.PreferencesPage` | ✅ DONE |
+| 6 | Download progress | `adw.StatusPage` + `gtk.ProgressBar` | ✅ DONE |
+| 7 | Search | `gtk.SearchEntry` + filter | ✅ DONE |
+| 8 | Save sync screens | `adw.StatusPage` + progress | ✅ DONE |
+| 9 | Collections | `gtk.ListBox` | ✅ DONE |
+| 10 | Remaining settings | `adw.PreferencesPage` | ✅ DONE |
+| 11 | Misc | Various | ✅ DONE |
 
 ### 3.2 gabagool → GTK4 widget mapping
 
@@ -382,7 +382,7 @@ Each screen is independent — migrate in order of user flow:
 
 ---
 
-## Phase 4: Flatpak Packaging
+## Phase 4: Flatpak Packaging ✅ DONE
 
 ### 4.1 Flatpak manifest
 
@@ -421,7 +421,7 @@ modules:
 
 ---
 
-## Phase 5: Build System Updates
+## Phase 5: Build System Updates ✅ DONE
 
 ### 5.1 flake.nix changes
 
@@ -470,7 +470,7 @@ buildInputs = with pkgs; [
 
 ---
 
-## Phase 6: Logger Migration (In Progress ⚠️)
+## Phase 6: Logger Migration ✅ DONE
 
 `gaba.GetLogger()` is used throughout — not just in UI code but referenced in AGENTS.md as the project logger. Replace with stdlib `log/slog`:
 
@@ -502,7 +502,7 @@ Then find-and-replace `gaba.GetLogger()` → `internal.GetLogger()` across the c
 
 ---
 
-## Phase 7: Cleanup
+## Phase 7: Cleanup ✅ DONE
 
 1. Delete `ui/`, `app/`, `cfw/`, `gui/`, `cmd/grout-gui/`
 2. Run `go mod tidy` to drop gabagool + SDL2 + transitive deps

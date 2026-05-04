@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 
-	gaba "github.com/BrandonKowalski/gabagool/v2/pkg/gabagool"
+	internal "grout/internal"
 )
 
 type TokenExchangeRequest struct {
@@ -105,7 +105,7 @@ func (c *Client) GetCurrentUser() (CurrentUser, error) {
 }
 
 func logResponseDebug(label string, resp *http.Response) {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 
 	headers := make(map[string]string)

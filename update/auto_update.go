@@ -7,7 +7,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	gaba "github.com/BrandonKowalski/gabagool/v2/pkg/gabagool"
+	internal "grout/internal"
 )
 
 const updateIcon = "\U000F06B0"
@@ -79,7 +79,7 @@ func (a *AutoUpdate) Recheck(releaseChannel internal.ReleaseChannel) {
 }
 
 func (a *AutoUpdate) run() {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 	defer a.running.Store(false)
 
 	logger.Debug("AutoUpdate: Checking for updates in background")

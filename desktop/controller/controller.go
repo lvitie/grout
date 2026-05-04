@@ -2,7 +2,7 @@ package controller
 
 import (
 	"github.com/holoplot/go-evdev"
-	"github.com/diamondburned/gotk4/pkg/glib"
+	"github.com/diamondburned/gotk4/pkg/core/glib"
 )
 
 type Action int

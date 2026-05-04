@@ -3,7 +3,7 @@ package cache
 import (
 	"time"
 
-	gaba "github.com/BrandonKowalski/gabagool/v2/pkg/gabagool"
+	internal "grout/internal"
 )
 
 type SaveSyncRecord struct {
@@ -31,7 +31,7 @@ func (cm *Manager) RecordSaveSync(record SaveSyncRecord) error {
 	`, record.RomID, record.RomName, record.Action, record.DeviceID, record.SaveID, record.FileName, nowUTC())
 
 	if err != nil {
-		gaba.GetLogger().Error("Failed to record save sync", "romID", record.RomID, "error", err)
+		internal.GetLogger().Error("Failed to record save sync", "romID", record.RomID, "error", err)
 	}
 	return err
 }
@@ -51,7 +51,7 @@ func (cm *Manager) GetSaveSyncHistory(deviceID string) []SaveSyncRecord {
 		ORDER BY synced_at DESC
 	`, deviceID)
 	if err != nil {
-		gaba.GetLogger().Error("Failed to get save sync history", "error", err)
+		internal.GetLogger().Error("Failed to get save sync history", "error", err)
 		return nil
 	}
 	defer rows.Close()
@@ -65,14 +65,14 @@ func (cm *Manager) GetSaveSyncHistory(deviceID string) []SaveSyncRecord {
 		}
 		parsed, err := time.Parse(time.RFC3339, syncedAt)
 		if err != nil {
-			gaba.GetLogger().Warn("Failed to parse synced_at timestamp", "value", syncedAt, "error", err)
+			internal.GetLogger().Warn("Failed to parse synced_at timestamp", "value", syncedAt, "error", err)
 		} else {
 			r.SyncedAt = parsed
 		}
 		records = append(records, r)
 	}
 	if err := rows.Err(); err != nil {
-		gaba.GetLogger().Error("Error iterating save sync history rows", "error", err)
+		internal.GetLogger().Error("Error iterating save sync history rows", "error", err)
 	}
 	return records
 }
@@ -89,7 +89,7 @@ func (cm *Manager) GetSyncedRomIDs(deviceID string) []int {
 		SELECT DISTINCT rom_id FROM save_sync_history WHERE device_id = ?
 	`, deviceID)
 	if err != nil {
-		gaba.GetLogger().Error("Failed to get synced rom IDs", "error", err)
+		internal.GetLogger().Error("Failed to get synced rom IDs", "error", err)
 		return nil
 	}
 	defer rows.Close()
@@ -102,7 +102,7 @@ func (cm *Manager) GetSyncedRomIDs(deviceID string) []int {
 		}
 	}
 	if err := rows.Err(); err != nil {
-		gaba.GetLogger().Error("Error iterating synced rom ID rows", "error", err)
+		internal.GetLogger().Error("Error iterating synced rom ID rows", "error", err)
 	}
 	return ids
 }

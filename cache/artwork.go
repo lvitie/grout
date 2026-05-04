@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	gaba "github.com/BrandonKowalski/gabagool/v2/pkg/gabagool"
+	internal "grout/internal"
 )
 
 func GetArtworkCachePath(platformFSSlug string, romID int) string {
@@ -30,7 +30,7 @@ func EnsureArtworkCacheDir(platformFSSlug string) error {
 }
 
 func (cm *Manager) ValidateArtworkCache() (int, error) {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 	cacheDir := GetArtworkCacheDir()
 	removed := 0
 
@@ -78,11 +78,11 @@ func RunArtworkValidation() {
 		go func() {
 			removed, err := cm.ValidateArtworkCache()
 			if err != nil {
-				gaba.GetLogger().Debug("Failed to validate artwork cache", "error", err)
+				internal.GetLogger().Debug("Failed to validate artwork cache", "error", err)
 				return
 			}
 			if removed > 0 {
-				gaba.GetLogger().Debug("Removed invalid artwork files", "count", removed)
+				internal.GetLogger().Debug("Removed invalid artwork files", "count", removed)
 			}
 		}()
 	}
@@ -121,7 +121,7 @@ func GetArtworkCoverPath(rom romm.Rom, artkind artutil.ArtKind, host romm.Host) 
 }
 
 func DownloadAndCacheArtwork(rom romm.Rom, kind artutil.ArtKind, host romm.Host) error {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	artURL := GetArtworkCoverPath(rom, kind, host)
 	if artURL == "" {
@@ -184,7 +184,7 @@ func DownloadAndCacheArtwork(rom romm.Rom, kind artutil.ArtKind, host romm.Host)
 }
 
 func SyncArtworkInBackground(artkind artutil.ArtKind, host romm.Host, games []romm.Rom) {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	missing := GetMissingArtwork(games)
 	if len(missing) == 0 {

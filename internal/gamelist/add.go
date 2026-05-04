@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	gaba "github.com/BrandonKowalski/gabagool/v2/pkg/gabagool"
+	internal "grout/internal"
 )
 
 type GameListEntry struct {
@@ -140,15 +140,15 @@ func AddRomGamesToGamelist(entry []RomGameEntry, gamelistFilename FileName) erro
 			if fileutil.FileExists(gamelistPath) {
 				data, err := os.ReadFile(gamelistPath)
 				if err != nil {
-					gaba.GetLogger().Debug("Error reading gamelist file", "error", err, "path", gamelistPath)
+					internal.GetLogger().Debug("Error reading gamelist file", "error", err, "path", gamelistPath)
 				}
 				if len(data) > 0 {
-					gaba.GetLogger().Debug("Found gamelist file", "path", gamelistPath, "data", string(data))
+					internal.GetLogger().Debug("Found gamelist file", "path", gamelistPath, "data", string(data))
 					if err := gl.Parse(data); err != nil {
-						gaba.GetLogger().Error("gamelist not found or can't be parsed, skipping platform", "path", gamelistPath, "error", err)
+						internal.GetLogger().Error("gamelist not found or can't be parsed, skipping platform", "path", gamelistPath, "error", err)
 						continue
 					} else {
-						gaba.GetLogger().Debug("Successfully parsed gamelist file", "path", gamelistPath, "data", string(data))
+						internal.GetLogger().Debug("Successfully parsed gamelist file", "path", gamelistPath, "data", string(data))
 					}
 				}
 			}
@@ -161,10 +161,10 @@ func AddRomGamesToGamelist(entry []RomGameEntry, gamelistFilename FileName) erro
 
 	for _, glEntry := range gamelists {
 		if err := glEntry.GL.Save(glEntry.Path); err != nil {
-			gaba.GetLogger().Error("Unable to save gamelist file", "error", err, "path", glEntry.Path)
+			internal.GetLogger().Error("Unable to save gamelist file", "error", err, "path", glEntry.Path)
 			return err
 		}
-		gaba.GetLogger().Debug("Successfully saved gamelist file", "path", glEntry.Path)
+		internal.GetLogger().Debug("Successfully saved gamelist file", "path", glEntry.Path)
 	}
 
 	return nil

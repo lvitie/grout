@@ -1,0 +1,25 @@
+app-id: app.romm.Grout
+runtime: org.gnome.Platform
+runtime-version: '47'
+sdk: org.gnome.Sdk
+command: grout-desktop
+
+finish-args:
+  - --share=network             # RomM API access
+  - --share=ipc                 # X11 shared memory
+  - --socket=fallback-x11       # X11 fallback
+  - --socket=wayland            # Wayland native
+  - --device=dri                # GPU acceleration
+  - --device=input              # Controller/gamepad access (/dev/input)
+  - --filesystem=xdg-data/grout:create    # Save data
+  - --filesystem=xdg-cache/grout:create   # Cache/DB
+  - --filesystem=xdg-config/grout:create  # Config
+
+modules:
+  - name: grout
+    buildsystem: simple
+    build-commands:
+      - go build -o /app/bin/grout-desktop ./cmd/grout-desktop
+    sources:
+      - type: dir
+        path: .

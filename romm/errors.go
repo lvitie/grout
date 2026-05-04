@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/BrandonKowalski/gabagool/v2/pkg/gabagool"
+	"grout/internal"
 )
 
 var (
@@ -86,7 +86,7 @@ func ClassifyError(err error) error {
 		return fmt.Errorf("%w: host did not respond", ErrTimeout)
 	}
 
-	gabagool.GetLogger().Debug("ClassifyError: unclassified error", "error", err, "error_type", fmt.Sprintf("%T", err), "error_string", errMsg)
+	internal.GetLogger().Debug("ClassifyError: unclassified error", "error", err, "error_type", fmt.Sprintf("%T", err), "error_string", errMsg)
 
 	return err
 }

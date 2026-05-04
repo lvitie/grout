@@ -16,7 +16,7 @@ import (
 	"runtime"
 	"strings"
 
-	gaba "github.com/BrandonKowalski/gabagool/v2/pkg/gabagool"
+	internal "grout/internal"
 	"go.uber.org/atomic"
 )
 
@@ -110,7 +110,7 @@ func CheckForUpdate(c cfw.CFW, releaseChannel internal.ReleaseChannel, host *rom
 		}, nil
 	}
 
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	versions, err := FetchVersionsFile()
 	if err != nil {

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	gaba "github.com/BrandonKowalski/gabagool/v2/pkg/gabagool"
+	internal "grout/internal"
 )
 
 type Version struct {
@@ -72,13 +72,13 @@ func ParseVersion(v string) (Version, error) {
 func CompareVersions(current, latest string) int {
 	currentVer, err := ParseVersion(current)
 	if err != nil {
-		gaba.GetLogger().Warn("Failed to parse current version", "version", current, "error", err)
+		internal.GetLogger().Warn("Failed to parse current version", "version", current, "error", err)
 		return 0
 	}
 
 	latestVer, err := ParseVersion(latest)
 	if err != nil {
-		gaba.GetLogger().Warn("Failed to parse latest version", "version", latest, "error", err)
+		internal.GetLogger().Warn("Failed to parse latest version", "version", latest, "error", err)
 		return 0
 	}
 

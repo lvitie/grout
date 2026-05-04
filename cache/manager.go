@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	gaba "github.com/BrandonKowalski/gabagool/v2/pkg/gabagool"
+	internal "grout/internal"
 	"go.uber.org/atomic"
 	_ "modernc.org/sqlite"
 )
@@ -82,7 +82,7 @@ func InitCacheManager(host romm.Host, config Config) error {
 }
 
 func newCacheManager(host romm.Host, config Config) (*Manager, error) {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	dbPath := getCacheDBPath()
 
@@ -141,7 +141,7 @@ func (cm *Manager) enableBulkLoadMode() {
 	if cm == nil || cm.db == nil {
 		return
 	}
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 	pragmas := []string{
 		"PRAGMA synchronous = OFF",
 		"PRAGMA journal_mode = OFF",
@@ -161,7 +161,7 @@ func (cm *Manager) disableBulkLoadMode() {
 	if cm == nil || cm.db == nil {
 		return
 	}
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 	pragmas := []string{
 		"PRAGMA locking_mode = NORMAL",
 		"PRAGMA journal_mode = WAL",
@@ -223,7 +223,7 @@ func (cm *Manager) ClearMetadata() error {
 		return ErrNotInitialized
 	}
 
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
@@ -253,7 +253,7 @@ func (cm *Manager) ClearMetadata() error {
 }
 
 func (cm *Manager) ClearArtwork() {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	artworkDir := GetArtworkCacheDir()
 	if fileutil.FileExists(artworkDir) {
@@ -427,7 +427,7 @@ func (cm *Manager) SyncPlatformGames(platforms []romm.Platform) (int, error) {
 		return 0, ErrNotInitialized
 	}
 
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 	totalGames := 0
 
 	for _, platform := range platforms {
@@ -472,7 +472,7 @@ func GetCacheDir() string {
 // DeleteCacheFolder removes the entire cache directory and resets the singleton
 // so InitCacheManager can create a fresh instance.
 func DeleteCacheFolder() error {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	cacheManagerMu.Lock()
 	if cacheManager != nil {
@@ -493,7 +493,7 @@ func DeleteCacheFolder() error {
 }
 
 func cleanupLegacyCache() {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	wd, err := os.Getwd()
 	if err != nil {

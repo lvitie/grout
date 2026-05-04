@@ -34,15 +34,15 @@
           ];
 
           buildInputs = with pkgs; [
-            SDL2
-            SDL2_image
-            SDL2_ttf
-            SDL2_gfx
+            gtk4
+            libadwaita
+            gobject-introspection
           ];
 
           buildPhase = ''
             export HOME=$TMP
-            go build -o grout ./cmd/grout-gui
+            export HOME=$TMP
+            go build -o grout ./cmd/grout-desktop
           '';
 
           installPhase = ''
@@ -75,12 +75,11 @@
             # Debugger (optional)
             delve
 
-            # For local Fyne UI development
+            # For GTK4 UI development
             pkg-config
-            SDL2
-            SDL2_image
-            SDL2_ttf
-            SDL2_gfx
+            gtk4
+            libadwaita
+            gobject-introspection
             libx11
             libxxf86vm
 
@@ -93,7 +92,7 @@
             echo "✓ Grout development environment loaded"
             echo ""
             echo "Quick commands:"
-            echo "  go run ./cmd/grout-gui          # Run the UI locally"
+            echo "  go run ./cmd/grout-desktop      # Run the UI locally"
             echo "  task code:lint                  # Lint code"
             echo "  go test ./...                   # Run tests"
             echo "  task --list                     # See all build tasks"
@@ -113,10 +112,9 @@
             golangci-lint
             statix
             pkg-config
-            SDL2
-            SDL2_image
-            SDL2_ttf
-            SDL2_gfx
+            gtk4
+            libadwaita
+            gobject-introspection
             qemu
           ];
 

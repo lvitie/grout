@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	gaba "github.com/BrandonKowalski/gabagool/v2/pkg/gabagool"
+	internal "grout/internal"
 )
 
 const schemaVersion = 11
@@ -43,7 +43,7 @@ var junctionTables = []string{
 // migrateIfNeeded checks the current schema version and runs migrations if required.
 // Since this is a cache database, migration simply drops and recreates affected tables.
 func migrateIfNeeded(db *sql.DB) error {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	var versionStr string
 	err := db.QueryRow(`SELECT value FROM cache_metadata WHERE key = 'schema_version'`).Scan(&versionStr)
@@ -95,7 +95,7 @@ func migrateIfNeeded(db *sql.DB) error {
 // migrateToV7 drops games and all related tables so they get
 // recreated with the normalized schema by createTables. The next sync refills everything.
 func migrateToV7(db *sql.DB) error {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	tx, err := db.Begin()
 	if err != nil {

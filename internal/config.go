@@ -198,7 +198,6 @@ func SaveConfig(config *Config) error {
 		config.AdditionalDownloads.Marquee = artutil.ArtKindNone
 	}
 
-	// gaba.SetRawLogLevel(string(config.LogLevel)) // Remove this if it's gabagool specific
 	// For now, I'll just ignore it or implement it in internal/logger.go later.
 
 	/*

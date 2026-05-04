@@ -350,7 +350,7 @@ func (cm *Manager) fetchAndCacheCollectionsWithProgress(progress *atomic.Float64
 // cached items that no longer exist. This handles server-side deletions that
 // incremental (UpdatedAfter) syncing would otherwise miss.
 func (cm *Manager) purgeDeletedItems(client *romm.Client) {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	var platformIDs, romIDs, collectionIDs []int
 	var platformErr, romErr, collectionErr error
@@ -415,7 +415,7 @@ func (cm *Manager) RefreshPlatformGamesWithProgress(platform romm.Platform, prog
 	var updatedAfter string
 	if lastRefresh, err := cm.GetLastRefreshTime(MetaKeyGamesRefreshedAt); err == nil {
 		updatedAfter = lastRefresh.Format(time.RFC3339)
-		gaba.GetLogger().Debug("Using incremental refresh", "updated_after", updatedAfter)
+		internal.GetLogger().Debug("Using incremental refresh", "updated_after", updatedAfter)
 	}
 
 	_, err := cm.fetchPlatformGames(platform, &fetchOpts{

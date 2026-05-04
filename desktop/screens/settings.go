@@ -51,7 +51,28 @@ func (s *SettingsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	showBoxArtRow.SetActive(s.config.ShowBoxArt)
 	appearanceGroup.Add(showBoxArtRow)
 
-	// Add more groups as needed...
+	// More Group
+	moreGroup := adw.NewPreferencesGroup()
+	moreGroup.SetTitle("More")
+	page.Add(moreGroup)
+
+	advancedRow := adw.NewActionRow()
+	advancedRow.SetTitle("Advanced")
+	advancedRow.SetSubtitle("Network, logging, and experimental settings")
+	advancedRow.SetActivatable(true)
+	advancedRow.ConnectActivated(func() {
+		router.Navigate(NewAdvancedSettingsScreen(router))
+	})
+	moreGroup.Add(advancedRow)
+
+	toolsRow := adw.NewActionRow()
+	toolsRow.SetTitle("Tools")
+	toolsRow.SetSubtitle("Maintenance and manual synchronization")
+	toolsRow.SetActivatable(true)
+	toolsRow.ConnectActivated(func() {
+		router.Navigate(NewToolsSettingsScreen(router))
+	})
+	moreGroup.Add(toolsRow)
 
 	navPage := adw.NewNavigationPage(page, "Settings")
 	return navPage
