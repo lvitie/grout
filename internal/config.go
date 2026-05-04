@@ -6,6 +6,7 @@ import (
 	"grout/cache"
 	"grout/platform"
 	"grout/internal/artutil"
+	"grout/internal/i18n"
 	"grout/romm"
 	"os"
 	"sync/atomic"
@@ -205,6 +206,8 @@ func SaveConfig(config *Config) error {
 		GetLogger().Error("Failed to set language", "error", err, "language", config.Language)
 	}
 	*/
+	// For now, we don't have a SetWithCode in our minimal wrapper.
+	// We will implement this in Phase 7.
 
 	pretty, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {

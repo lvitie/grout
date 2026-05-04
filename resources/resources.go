@@ -4,7 +4,7 @@ import (
 	"embed"
 	"fmt"
 
-	"github.com/BrandonKowalski/gabagool/v2/pkg/gabagool/i18n"
+	"grout/internal/i18n"
 )
 
 //go:embed locales/*.toml splash.png

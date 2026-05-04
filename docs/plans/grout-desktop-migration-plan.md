@@ -85,7 +85,7 @@ github.com/holoplot/go-evdev             # Controller input (promote from indire
 
 ---
 
-## Phase 1: Platform Abstraction Layer
+## Phase 1: Platform Abstraction Layer ✅ DONE
 
 Replace `cfw/` with a `platform/` package that provides the same interfaces but for Linux desktop.
 
@@ -141,7 +141,7 @@ Replace direct `cfw.GetCFW()`, `cfw.BaseSavePath()`, `cfw.ScanRoms()` calls with
 
 ---
 
-## Phase 2: New GUI Architecture
+## Phase 2: New GUI Architecture (Skeleton ✅)
 
 ### 2.1 Project structure
 
@@ -345,7 +345,7 @@ go func() {
 
 ---
 
-## Phase 3: Screen-by-Screen Migration
+## Phase 3: Screen-by-Screen Migration (In Progress ⚠️)
 
 ### 3.1 Migration order (by dependency)
 
@@ -353,10 +353,10 @@ Each screen is independent — migrate in order of user flow:
 
 | Priority | Screen | GTK4 widget | Notes |
 |---|---|---|---|
-| 1 | Login | `adw.EntryRow` + `adw.PasswordEntryRow` | First-run flow |
-| 2 | Platform Selection | `gtk.ListBox` + `adw.ActionRow` | Main hub |
-| 3 | Game List | `gtk.ListView` + factory | Needs artwork loading |
-| 4 | Game Details | `adw.Clamp` + cover image + metadata | Download button |
+| 1 | Login | `adw.EntryRow` + `adw.PasswordEntryRow` | ✅ DONE |
+| 2 | Platform Selection | `gtk.ListBox` + `adw.ActionRow` | ✅ DONE |
+| 3 | Game List | `gtk.ListView` + factory | ✅ DONE |
+| 4 | Game Details | `adw.Clamp` + cover image + metadata | ✅ DONE |
 | 5 | Settings | `adw.PreferencesPage` | Natural fit for Adwaita |
 | 6 | Download progress | `adw.StatusPage` + `gtk.ProgressBar` | Overlay pattern |
 | 7 | Search | `gtk.SearchEntry` + filter | Integrate into game list header |
@@ -470,7 +470,7 @@ buildInputs = with pkgs; [
 
 ---
 
-## Phase 6: Logger Migration
+## Phase 6: Logger Migration (In Progress ⚠️)
 
 `gaba.GetLogger()` is used throughout — not just in UI code but referenced in AGENTS.md as the project logger. Replace with stdlib `log/slog`:
 
