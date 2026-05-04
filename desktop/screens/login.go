@@ -1,6 +1,7 @@
 package screens
 
 import (
+	"grout/cache"
 	"grout/desktop"
 	"grout/desktop/dialogs"
 	"grout/internal"
@@ -65,6 +66,7 @@ func (s *LoginScreen) Build(router *desktop.Router) gtk.Widgetter {
 		cfg := router.State().GetConfig()
 		cfg.Hosts = []romm.Host{host}
 		internal.SaveConfig(cfg)
+		cache.InitCacheManager(host, cfg)
 
 		router.Navigate(NewPlatformSelectionScreen(router))
 	})

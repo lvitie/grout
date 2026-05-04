@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"fmt"
 	"grout/internal"
 	"grout/romm"
 	"runtime"
@@ -11,7 +12,7 @@ import (
 )
 
 const (
-	DefaultRomPageSize           = 1000
+	DefaultRomPageSize           = 100
 	MaxConcurrentPlatformFetches = 10
 )
 
@@ -21,125 +22,167 @@ type SyncStats struct {
 	CollectionsSynced int
 }
 
-func (cm *Manager) populateCache(platforms []romm.Platform, progress *atomic.Float64) (SyncStats, error) {
+func (cm *Manager) populateCache(platforms []romm.Platform, progress *atomic.Float64, force bool) (SyncStats, error) {
 	logger := internal.GetLogger()
 	stats := SyncStats{Platforms: len(platforms)}
-
-	if len(platforms) == 0 {
-		if progress != nil {
-			progress.Store(1.0)
-		}
-		return stats, nil
-	}
 
 	// Create a single HTTP client for all requests
 	client := romm.NewClientFromHost(cm.host, cm.config.GetApiTimeout())
 
 	// Get the last refresh time to use for incremental updates
-	// Only use incremental update if cache has games, otherwise do full refresh
 	var updatedAfter string
-	isBulkLoad := !cm.HasCache()
+	hasCache := cm.HasCache()
+	isBulkLoad := !hasCache || force
+	
+	logger.Debug("Sync decision inputs", "force", force, "hasCache", hasCache)
 
+	// If we have very few games, we should probably do a full sync anyway
+	// to recover from partial or failed previous syncs.
 	if !isBulkLoad {
+		gameCount := 0
+		cm.db.QueryRow("SELECT COUNT(*) FROM games").Scan(&gameCount)
+		logger.Debug("Checking game count for recovery", "gameCount", gameCount)
+		if gameCount < 500 {
+			logger.Info("Cache has very few games, forcing bulk load to ensure complete library", "count", gameCount)
+			isBulkLoad = true
+		}
+	}
+	
+	if isBulkLoad {
+		updatedAfter = ""
+		logger.Info("Sync mode: FULL REFRESH", "force", force, "empty_cache", !hasCache, "is_bulk", isBulkLoad)
+	} else {
 		if lastRefresh, err := cm.GetLastRefreshTime(MetaKeyGamesRefreshedAt); err == nil {
 			updatedAfter = lastRefresh.Format(time.RFC3339)
-			logger.Debug("Using incremental cache update", "updated_after", updatedAfter)
-		}
-
-		// Fetch only updated platforms if we have a previous refresh time
-		if platformsRefresh, err := cm.GetLastRefreshTime(MetaKeyPlatformsRefreshedAt); err == nil {
-			updatedPlatforms, err := client.GetPlatforms(romm.GetPlatformsQuery{UpdatedAfter: platformsRefresh.Format(time.RFC3339)})
-			if err != nil {
-				logger.Error("Failed to fetch updated platforms", "error", err)
-			} else {
-				if len(updatedPlatforms) > 0 {
-					if err := cm.SavePlatforms(updatedPlatforms); err != nil {
-						logger.Error("Failed to save updated platforms", "error", err)
-					} else {
-						logger.Debug("Saved updated platforms", "count", len(updatedPlatforms))
-					}
-				}
-				cm.RecordRefreshTime(MetaKeyPlatformsRefreshedAt)
-			}
+			logger.Info("Sync mode: INCREMENTAL", "since", updatedAfter)
 		} else {
-			// No previous platforms refresh time - record it now for future incremental syncs
-			cm.RecordRefreshTime(MetaKeyPlatformsRefreshedAt)
+			logger.Info("Sync mode: FULL REFRESH (No timestamp found)")
+			isBulkLoad = true
+			updatedAfter = ""
 		}
-	} else {
+	}
+	
+	if isBulkLoad {
 		// Bulk load optimizations for fresh cache
 		cm.enableBulkLoadMode()
 		defer cm.disableBulkLoadMode()
 
 		// Save all platforms on first run / empty cache
-		// Fetch all platforms from API, not just mapped ones
+		logger.Info("Bulk load: fetching all platforms from API")
 		allPlatforms, err := client.GetPlatforms()
 		if err != nil {
 			logger.Error("Failed to fetch all platforms", "error", err)
-			// Fall back to saving just the mapped platforms
-			if err := cm.SavePlatforms(platforms); err != nil {
-				return stats, err
+			if len(platforms) > 0 {
+				romm.DisambiguatePlatformNames(platforms)
+				if err := cm.SavePlatforms(platforms); err != nil {
+					return stats, err
+				}
 			}
 		} else {
+			romm.DisambiguatePlatformNames(allPlatforms)
 			if err := cm.SavePlatforms(allPlatforms); err != nil {
 				return stats, err
 			}
+			// Use the full list for syncing if our input was empty or we want a full refresh
+			if len(platforms) == 0 || isBulkLoad {
+				platforms = allPlatforms
+			}
 		}
 		cm.RecordRefreshTime(MetaKeyPlatformsRefreshedAt)
+	} else if len(platforms) == 0 {
+		// If not bulk load but no platforms provided, fetch them all to be safe
+		logger.Info("Incremental sync: fetching platforms to check for updates")
+		allPlatforms, err := client.GetPlatforms()
+		if err == nil {
+			romm.DisambiguatePlatformNames(allPlatforms)
+			platforms = cm.GetPlatformsNeedingSync(allPlatforms)
+		}
 	}
 
 	totalExpectedGames := int64(0)
 	for _, p := range platforms {
 		totalExpectedGames += int64(p.ROMCount)
 	}
-	if totalExpectedGames == 0 {
+
+	if totalExpectedGames == 0 && len(platforms) > 0 {
 		totalExpectedGames = int64(len(platforms))
 	}
+	
+	logger.Info("Sync planned", "total_platforms", len(platforms), "total_expected_games", totalExpectedGames)
 
 	// Progress: games 0-85%, collections 85-98%, done 100%
 	gamesFetched := &atomic.Int64{}
 	updateProgress := func(count int) {
 		if progress != nil {
 			fetched := gamesFetched.Add(int64(count))
+			if totalExpectedGames <= 0 {
+				progress.Store(0.85)
+				return
+			}
 			pct := float64(fetched) / float64(totalExpectedGames) * 0.85
 			if pct > 0.85 {
 				pct = 0.85
 			}
+			logger.Info("Sync progress", "fetched_games", fetched, "total_expected", totalExpectedGames, "percent", fmt.Sprintf("%.1f%%", pct*100))
 			progress.Store(pct)
 		}
 	}
 
 	var firstErr error
+	logger.Info("Starting cache population", "platform_count", len(platforms), "is_bulk_load", isBulkLoad)
 
-	for _, p := range platforms {
+	if len(platforms) == 0 {
+		logger.Warn("No platforms identified for sync.")
+		if progress != nil {
+			progress.Store(1.0)
+		}
+		return stats, nil
+	}
+
+	for i, p := range platforms {
+		logger.Info("Processing platform", "id", p.ID, "name", p.Name, "expected_rom_count", p.ROMCount)
 		count, err := cm.fetchPlatformGames(p, &fetchOpts{
 			client:       client,
 			onProgress:   updateProgress,
 			updatedAfter: updatedAfter,
+			force:        isBulkLoad,
 		})
 
 		if err != nil {
-			logger.Error("Failed to fetch/save platform games", "platformID", p.ID, "error", err)
+			logger.Error("Failed to fetch/save platform games", "platformID", p.ID, "name", p.Name, "error", err)
 			cm.RecordPlatformSyncFailure(p.ID)
 			if firstErr == nil {
 				firstErr = err
 			}
 		} else {
+			if count == 0 && p.ROMCount > 0 {
+				logger.Warn("API returned zero games for platform", "id", p.ID, "name", p.Name, "expected", p.ROMCount, "updated_after", updatedAfter)
+			}
+			logger.Info("Synced platform games", "id", p.ID, "name", p.Name, "count", count)
 			cm.RecordPlatformSyncSuccess(p.ID, count)
 		}
+		
+		// Update progress even if 0 games were found to show we've moved to the next platform
+		if progress != nil {
+			platformPct := float64(i+1) / float64(len(platforms))
+			currentVal := progress.Load()
+			newVal := platformPct * 0.85
+			if newVal > currentVal {
+				logger.Info("Platform progress", "platform_idx", i+1, "total_platforms", len(platforms), "percent", fmt.Sprintf("%.1f%%", newVal*100))
+				progress.Store(newVal)
+			}
+		}
 
-		// Aggressively free memory after saving each platform
-		// Prevents OOM crashes on 128MB devices
 		runtime.GC()
 	}
 
-	// Record refresh time
+	// Record refresh time only on success
 	if firstErr == nil {
 		cm.RecordRefreshTime(MetaKeyGamesRefreshedAt)
 	}
 
 	// Collections (85-98%)
 	stats.CollectionsSynced = cm.fetchAndCacheCollectionsWithProgress(progress, 0.85, 0.98)
-
 	cm.RecordRefreshTime(MetaKeyCollectionsRefreshedAt)
 
 	// Purge items deleted from the server (only during incremental updates)
@@ -152,7 +195,7 @@ func (cm *Manager) populateCache(platforms []romm.Platform, progress *atomic.Flo
 	}
 
 	stats.GamesUpdated = int(gamesFetched.Load())
-	logger.Debug("Cache population completed", "platforms", stats.Platforms, "games", stats.GamesUpdated)
+	logger.Info("Cache population completed", "platforms", len(platforms), "games", stats.GamesUpdated)
 	return stats, firstErr
 }
 
@@ -161,6 +204,7 @@ type fetchOpts struct {
 	onProgress    func(count int) // Called with count of games fetched (for batch progress)
 	onPctProgress *atomic.Float64 // Set with percentage 0.0-1.0 (for UI progress bars)
 	updatedAfter  string
+	force         bool
 }
 
 func (cm *Manager) fetchPlatformGames(platform romm.Platform, opts *fetchOpts) (int, error) {
@@ -177,15 +221,21 @@ func (cm *Manager) fetchPlatformGames(platform romm.Platform, opts *fetchOpts) (
 	var allGames []romm.Rom
 	offset := 0
 	expectedTotal := 0
+	
+	fetchUpdatedAfter := opts.updatedAfter
+	if opts.force {
+		fetchUpdatedAfter = ""
+	}
 
 	for {
 		q := romm.GetRomsQuery{
 			PlatformIDs:  []int{platform.ID},
 			Offset:       offset,
 			Limit:        DefaultRomPageSize,
-			UpdatedAfter: opts.updatedAfter,
+			UpdatedAfter: fetchUpdatedAfter,
 		}
 
+		logger.Debug("Fetching games page", "platform", platform.Name, "offset", offset, "limit", DefaultRomPageSize, "updated_after", fetchUpdatedAfter)
 		res, err := client.GetRoms(q)
 		if err != nil {
 			logger.Error("Failed to fetch games",
@@ -194,6 +244,8 @@ func (cm *Manager) fetchPlatformGames(platform romm.Platform, opts *fetchOpts) (
 				"error", err)
 			return 0, err
 		}
+
+		logger.Debug("Fetched games page", "platform", platform.Name, "count", len(res.Items), "total_available", res.Total)
 
 		if offset == 0 {
 			expectedTotal = res.Total

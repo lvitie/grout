@@ -15,7 +15,10 @@ func (cm *Manager) GetPlatforms() ([]romm.Platform, error) {
 	defer cm.mu.RUnlock()
 
 	rows, err := cm.db.Query(`
-		SELECT data_json FROM platforms ORDER BY name
+		SELECT p.data_json, COALESCE(s.games_synced, p.rom_count)
+		FROM platforms p
+		LEFT JOIN platform_sync_status s ON p.id = s.platform_id
+		ORDER BY p.name
 	`)
 	if err != nil {
 		cm.stats.recordError()
@@ -26,7 +29,8 @@ func (cm *Manager) GetPlatforms() ([]romm.Platform, error) {
 	var platforms []romm.Platform
 	for rows.Next() {
 		var dataJSON string
-		if err := rows.Scan(&dataJSON); err != nil {
+		var romCount int
+		if err := rows.Scan(&dataJSON, &romCount); err != nil {
 			cm.stats.recordError()
 			return nil, newCacheError("get", "platforms", "", err)
 		}
@@ -36,6 +40,7 @@ func (cm *Manager) GetPlatforms() ([]romm.Platform, error) {
 			cm.stats.recordError()
 			return nil, newCacheError("get", "platforms", "", err)
 		}
+		platform.ROMCount = romCount
 		platforms = append(platforms, platform)
 	}
 

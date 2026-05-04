@@ -16,9 +16,13 @@ type AppState struct {
 }
 
 func NewAppState() *AppState {
-	cfg, _ := internal.LoadConfig()
+	cfg, err := internal.LoadConfig()
+	if err != nil {
+		cfg = &internal.Config{}
+	}
+
 	var host *romm.Host
-	if len(cfg.Hosts) > 0 {
+	if cfg != nil && len(cfg.Hosts) > 0 {
 		host = &cfg.Hosts[0]
 	}
 	

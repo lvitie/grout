@@ -406,12 +406,12 @@ func (cm *Manager) GetAllRefreshTimes() map[string]time.Time {
 	return result
 }
 
-func (cm *Manager) PopulateFullCacheWithProgress(platforms []romm.Platform, progress *atomic.Float64) (SyncStats, error) {
+func (cm *Manager) PopulateFullCacheWithProgress(platforms []romm.Platform, progress *atomic.Float64, force bool) (SyncStats, error) {
 	if cm == nil || !cm.initialized {
 		return SyncStats{}, ErrNotInitialized
 	}
 
-	return cm.populateCache(platforms, progress)
+	return cm.populateCache(platforms, progress, force)
 }
 
 func (cm *Manager) SyncCollectionsOnly() (int, error) {
@@ -431,7 +431,7 @@ func (cm *Manager) SyncPlatformGames(platforms []romm.Platform) (int, error) {
 	totalGames := 0
 
 	for _, platform := range platforms {
-		count, err := cm.fetchPlatformGames(platform, nil)
+		count, err := cm.fetchPlatformGames(platform, &fetchOpts{force: true})
 		if err != nil {
 			logger.Error("Failed to sync platform games", "platform", platform.Name, "error", err)
 			cm.RecordPlatformSyncFailure(platform.ID)

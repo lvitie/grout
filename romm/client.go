@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -100,6 +101,9 @@ func (c *Client) doRequest(method string, path string, queryParams queryParam, b
 			req.URL.RawQuery = values.Encode()
 		}
 	}
+
+	// Log the final URL for debugging
+	slog.Info("Executing RomM API request", "method", method, "url", req.URL.String())
 
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")

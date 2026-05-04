@@ -1,6 +1,7 @@
 package widgets
 
 import (
+	"grout/desktop"
 	"grout/romm"
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -13,8 +14,8 @@ type GameRow struct {
 
 func NewGameRow(game romm.Rom) *GameRow {
 	row := adw.NewActionRow()
-	row.SetTitle(game.Name)
-	row.SetSubtitle(game.FsName)
+	row.SetTitle(desktop.EscapeMarkup(game.Name))
+	row.SetSubtitle(desktop.EscapeMarkup(game.FsName))
 	
 	// Add a thumbnail placeholder
 	img := gtk.NewImage()

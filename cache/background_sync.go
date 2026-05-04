@@ -152,7 +152,7 @@ func (b *BackgroundSync) runSync(req syncRequest) {
 
 	default:
 		logger.Debug("BackgroundSync: Starting full cache update")
-		_, err = cm.PopulateFullCacheWithProgress(b.platforms, nil)
+		_, err = cm.PopulateFullCacheWithProgress(b.platforms, nil, false)
 
 		// After full sync, retry any platforms that previously failed
 		if err == nil {

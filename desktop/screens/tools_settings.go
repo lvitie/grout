@@ -27,6 +27,9 @@ func (s *ToolsSettingsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	rebuildCacheRow.SetTitle("Rebuild Cache")
 	rebuildCacheRow.SetSubtitle("Full resync with RomM server")
 	rebuildCacheRow.SetActivatable(true)
+	rebuildCacheRow.ConnectActivated(func() {
+		router.Navigate(NewRebuildCacheScreen(router))
+	})
 	maintenanceGroup.Add(rebuildCacheRow)
 
 	// Artwork Group
@@ -37,6 +40,9 @@ func (s *ToolsSettingsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	syncArtRow := adw.NewActionRow()
 	syncArtRow.SetTitle("Download Missing Art")
 	syncArtRow.SetActivatable(true)
+	syncArtRow.ConnectActivated(func() {
+		router.Navigate(NewArtworkSyncScreen(router))
+	})
 	artworkGroup.Add(syncArtRow)
 
 	navPage := adw.NewNavigationPage(page, "Tools")

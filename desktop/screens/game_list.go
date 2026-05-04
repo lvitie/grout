@@ -64,6 +64,8 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 
 	scrolled := gtk.NewScrolledWindow()
 	scrolled.SetChild(listBox)
+	scrolled.SetVExpand(true)
+	scrolled.SetHExpand(true)
 
 	header := adw.NewHeaderBar()
 	header.SetTitleWidget(adw.NewWindowTitle(s.platform.Name, ""))

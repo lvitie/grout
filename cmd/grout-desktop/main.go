@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"grout/cache"
 	"grout/desktop"
 	"grout/desktop/controller"
 	"grout/desktop/screens"
@@ -45,7 +46,14 @@ func activate(app *adw.Application, state *desktop.AppState) {
 
 	// Create router and show first screen
 	router := desktop.NewRouter(window, state)
-	router.Navigate(screens.NewLoginScreen(router))
+
+	host := state.GetHost()
+	if host != nil {
+		cache.InitCacheManager(*host, state.GetConfig())
+		router.Navigate(screens.NewPlatformSelectionScreen(router))
+	} else {
+		router.Navigate(screens.NewLoginScreen(router))
+	}
 
 	window.Present()
 }
