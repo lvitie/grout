@@ -25,7 +25,7 @@ func (s *SaveSyncScreen) Build(router *desktop.Router) gtk.Widgetter {
 	progress.SetShowText(true)
 
 	box := gtk.NewBox(gtk.OrientationVertical, 20)
-	box.SetValign(gtk.AlignCenter)
+	box.SetVAlign(gtk.AlignCenter)
 	box.Append(progress)
 
 	statusPage.SetChild(box)

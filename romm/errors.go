@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"grout/internal"
+	"log/slog"
 )
 
 var (
@@ -86,7 +86,7 @@ func ClassifyError(err error) error {
 		return fmt.Errorf("%w: host did not respond", ErrTimeout)
 	}
 
-	internal.GetLogger().Debug("ClassifyError: unclassified error", "error", err, "error_type", fmt.Sprintf("%T", err), "error_string", errMsg)
+	slog.Debug("ClassifyError: unclassified error", "error", err, "error_type", fmt.Sprintf("%T", err), "error_string", errMsg)
 
 	return err
 }

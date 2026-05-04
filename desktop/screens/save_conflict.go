@@ -41,7 +41,7 @@ func (s *SaveConflictScreen) Build(router *desktop.Router) gtk.Widgetter {
 	group.Add(remoteRow)
 
 	box := gtk.NewBox(gtk.OrientationVertical, 20)
-	box.SetValign(gtk.AlignCenter)
+	box.SetVAlign(gtk.AlignCenter)
 	box.Append(group)
 
 	statusPage.SetChild(box)

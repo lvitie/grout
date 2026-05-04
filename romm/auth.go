@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 
-	internal "grout/internal"
+	"log/slog"
 )
 
 type TokenExchangeRequest struct {
@@ -105,7 +105,6 @@ func (c *Client) GetCurrentUser() (CurrentUser, error) {
 }
 
 func logResponseDebug(label string, resp *http.Response) {
-	logger := internal.GetLogger()
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 
 	headers := make(map[string]string)
@@ -115,7 +114,7 @@ func logResponseDebug(label string, resp *http.Response) {
 		}
 	}
 
-	logger.Debug(label,
+	slog.Debug(label,
 		"status", resp.StatusCode,
 		"url", resp.Request.URL.String(),
 		"headers", headers,

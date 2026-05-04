@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"log/slog"
 
-	internal "grout/internal"
 )
 
 const (
@@ -204,7 +204,7 @@ func resolveAssetURL(host Host, path, fallbackURL string) string {
 			result, err = joinPathWithQuery(host.URL(), path)
 		}
 		if err != nil {
-			internal.GetLogger().Error("Error resolving asset URL", "error", err, "hostURL", host.ToLoggable(), "path", path)
+			slog.Error("Error resolving asset URL", "error", err, "hostURL", host.ToLoggable(), "path", path)
 			return ""
 		}
 		return strings.ReplaceAll(result, " ", "%20")
@@ -306,8 +306,7 @@ func (r *Rom) GetArtworkURL(kind artutil.ArtKind, host Host) string {
 		boxPath  string
 	)
 	var err error
-	logger := internal.GetLogger()
-	logger.Debug("Getting artwork URL for ROM", "romID", r.ID, "romName", r.Name, "artKind", kind)
+	slog.Debug("Getting artwork URL for ROM", "romID", r.ID, "romName", r.Name, "artKind", kind)
 
 	if kind == artutil.ArtKindBox2D {
 		if r.ScreenScraperMetadata.Box2DURL != "" {
@@ -353,9 +352,9 @@ func (r *Rom) GetArtworkURL(kind artutil.ArtKind, host Host) string {
 		}
 	}
 
-	logger.Debug("Using cover URL", "url", coverURL)
+	slog.Debug("Using cover URL", "url", coverURL)
 	if coverURL == "" && err != nil {
-		logger.Error("Error joining host URL with box path", "error", err, "hostURL", host.ToLoggable(), "boxPath", boxPath)
+		slog.Error("Error joining host URL with box path", "error", err, "hostURL", host.ToLoggable(), "boxPath", boxPath)
 	}
 
 	return strings.ReplaceAll(coverURL, " ", "%20")
@@ -364,7 +363,6 @@ func (r *Rom) GetArtworkURL(kind artutil.ArtKind, host Host) string {
 func (r *Rom) GetScreenshotURL(host Host) string {
 	var screenshotURL string
 	var err error
-	logger := internal.GetLogger()
 	if len(r.UserScreenshots) > 0 {
 		screenshotURL, err = joinPathWithQuery(host.URL(), r.UserScreenshots[0].URLPath)
 	} else if len(r.MergedScreenshots) > 0 {
@@ -374,7 +372,7 @@ func (r *Rom) GetScreenshotURL(host Host) string {
 	}
 
 	if screenshotURL == "" || err != nil {
-		logger.Error("No screenshot found in UserScreenshots, MergedScreenshots or ScreenScraper", "error", err, "hostURL", host.ToLoggable())
+		slog.Error("No screenshot found in UserScreenshots, MergedScreenshots or ScreenScraper", "error", err, "hostURL", host.ToLoggable())
 	}
 
 	return strings.ReplaceAll(screenshotURL, " ", "%20")

@@ -14,8 +14,8 @@ func NewProgressOverlay(child gtk.Widgetter) *ProgressOverlay {
 	overlay.SetChild(child)
 	
 	box := gtk.NewBox(gtk.OrientationVertical, 10)
-	box.SetValign(gtk.AlignEnd)
-	box.SetHalign(gtk.AlignCenter)
+	box.SetVAlign(gtk.AlignEnd)
+	box.SetHAlign(gtk.AlignCenter)
 	box.SetMarginBottom(20)
 	box.AddCSSClass("card") // Adwaita card style
 	

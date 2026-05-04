@@ -2,8 +2,10 @@ package screens
 
 import (
 	"grout/desktop"
-	"grout/romm"
 	"grout/desktop/dialogs"
+	"grout/internal"
+	"grout/romm"
+
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
@@ -42,12 +44,12 @@ func (s *LoginScreen) Build(router *desktop.Router) gtk.Widgetter {
 		password := passRow.Text()
 
 		host := romm.Host{
-			URL:      baseURL,
+			RootURI:  baseURL,
 			Username: username,
 			Password: password,
 		}
 
-		client := romm.NewClientFromHost(host, 10)
+		client := romm.NewClientFromHost(host)
 		if err := client.ValidateConnection(); err != nil {
 			dialogs.ShowError(router.Window(), "Connection Failed", err.Error())
 			return
@@ -62,7 +64,7 @@ func (s *LoginScreen) Build(router *desktop.Router) gtk.Widgetter {
 		router.State().SetHost(&host)
 		cfg := router.State().GetConfig()
 		cfg.Hosts = []romm.Host{host}
-		cfg.Save()
+		internal.SaveConfig(cfg)
 
 		router.Navigate(NewPlatformSelectionScreen(router))
 	})

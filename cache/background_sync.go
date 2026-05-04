@@ -4,14 +4,6 @@ import (
 	"grout/internal"
 	"grout/romm"
 	"sync"
-
-	internal "grout/internal"
-)
-
-const (
-	iconSynced  = "\U000F0AA9"
-	iconSyncing = "\U000F0CFF"
-	iconAlert   = "\U000F163A"
 )
 
 type syncType int
@@ -29,7 +21,6 @@ type syncRequest struct {
 
 type BackgroundSync struct {
 	platforms []romm.Platform
-	icon      *gaba.DynamicStatusBarIcon
 	requests  chan syncRequest
 	stop      chan struct{}
 	wg        sync.WaitGroup
@@ -40,15 +31,8 @@ type BackgroundSync struct {
 func NewBackgroundSync(platforms []romm.Platform) *BackgroundSync {
 	return &BackgroundSync{
 		platforms: platforms,
-		icon:      gaba.NewDynamicStatusBarIcon(iconSyncing),
 		requests:  make(chan syncRequest, 1),
 		stop:      make(chan struct{}),
-	}
-}
-
-func (b *BackgroundSync) Icon() gaba.StatusBarIcon {
-	return gaba.StatusBarIcon{
-		Dynamic: b.icon,
 	}
 }
 
@@ -118,10 +102,6 @@ func (b *BackgroundSync) Stop() {
 	internal.GetLogger().Debug("BackgroundSync: Stop requested")
 }
 
-func (b *BackgroundSync) SetSynced() {
-	b.icon.SetText(iconSynced)
-}
-
 func (b *BackgroundSync) worker() {
 	logger := internal.GetLogger()
 	defer b.wg.Done()
@@ -143,7 +123,6 @@ func (b *BackgroundSync) runSync(req syncRequest) {
 	defer func() {
 		if r := recover(); r != nil {
 			logger.Error("BackgroundSync: Panic recovered", "panic", r)
-			b.icon.SetText(iconAlert)
 		}
 	}()
 
@@ -154,12 +133,9 @@ func (b *BackgroundSync) runSync(req syncRequest) {
 	default:
 	}
 
-	b.icon.SetText(iconSyncing)
-
 	cm := GetCacheManager()
 	if cm == nil {
 		logger.Error("BackgroundSync: Cache manager not initialized")
-		b.icon.SetText(iconAlert)
 		return
 	}
 
@@ -197,10 +173,8 @@ func (b *BackgroundSync) runSync(req syncRequest) {
 
 	if err != nil {
 		logger.Error("BackgroundSync: Sync failed", "error", err)
-		b.icon.SetText(iconAlert)
 		return
 	}
 
-	b.icon.SetText(iconSynced)
 	logger.Debug("BackgroundSync: Sync completed")
 }

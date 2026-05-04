@@ -8,8 +8,6 @@ import (
 	"image/png"
 	"os"
 
-	"image/png"
-	"os"
 	goqr "github.com/piglig/go-qr"
 	"golang.org/x/image/draw"
 	_ "golang.org/x/image/webp" // Register WebP decoder

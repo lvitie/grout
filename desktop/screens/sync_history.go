@@ -19,7 +19,12 @@ func (s *SyncHistoryScreen) Build(router *desktop.Router) gtk.Widgetter {
 	listBox := gtk.NewListBox()
 	
 	cm := cache.GetCacheManager()
-	history, _ := cm.GetSaveSyncHistory(50)
+	host := router.State().GetHost()
+	deviceID := ""
+	if host != nil {
+		deviceID = host.DeviceID
+	}
+	history := cm.GetSaveSyncHistory(deviceID)
 	
 	for _, entry := range history {
 		row := adw.NewActionRow()

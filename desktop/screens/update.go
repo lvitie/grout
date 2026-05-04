@@ -24,7 +24,7 @@ func (s *UpdateScreen) Build(router *desktop.Router) gtk.Widgetter {
 	spinner.Start()
 
 	box := gtk.NewBox(gtk.OrientationVertical, 20)
-	box.SetValign(gtk.AlignCenter)
+	box.SetVAlign(gtk.AlignCenter)
 	box.Append(spinner)
 
 	statusPage.SetChild(box)

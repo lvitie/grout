@@ -88,6 +88,7 @@
           ];
 
           shellHook = ''
+            export CGO_CFLAGS="-Wno-builtin-declaration-mismatch"
             echo "✓ Grout development environment loaded"
             echo ""
             echo "Quick commands:"

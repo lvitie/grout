@@ -3,12 +3,11 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
-	"grout/cache"
+	"grout/romm"
 	"grout/platform"
 	"grout/internal/artutil"
-	"grout/internal/i18n"
-	"grout/romm"
 	"os"
+	"path/filepath"
 	"sync/atomic"
 	"time"
 )
@@ -342,12 +341,11 @@ func (c Config) ResolveRommFSSlug(cfwKey string) string {
 	return cfwKey
 }
 
-func (c Config) GetPlatformRomDirectory(platform romm.Platform) string {
-	rp := platform.FSSlug
-	if mapping, ok := c.DirectoryMappings[platform.FSSlug]; ok && mapping.RelativePath != "" {
+func (c Config) GetPlatformRomDirectory(pi romm.Platform) string {
+	rp := pi.FSSlug
+	if mapping, ok := c.DirectoryMappings[pi.FSSlug]; ok && mapping.RelativePath != "" {
 		rp = mapping.RelativePath
 	}
-	effectiveFSSlug := c.ResolveFSSlug(platform.FSSlug)
 	
 	// Join with base rom directory from platform
 	baseRomDir := platform.GetCurrent().RomDirectory()
@@ -355,89 +353,53 @@ func (c Config) GetPlatformRomDirectory(platform romm.Platform) string {
 	return filepath.Join(baseRomDir, rp)
 }
 
-func (c Config) GetArtDirectory(platformItem romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platformItem)
-	return platform.GetCurrent().GetArtDirectory(romDir, platformItem.FSSlug, platformItem.Name)
+func (c Config) GetArtDirectory(pi romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(pi)
+	return platform.GetCurrent().GetArtDirectory(romDir, pi.FSSlug, pi.Name)
 }
 
-func (c Config) GetArtPreviewDirectory(platformItem romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platformItem)
-	return platform.GetCurrent().GetArtPreviewDirectory(romDir, platformItem.FSSlug, platformItem.Name)
+func (c Config) GetArtPreviewDirectory(pi romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(pi)
+	return platform.GetCurrent().GetArtPreviewDirectory(romDir, pi.FSSlug, pi.Name)
 }
 
-func (c Config) GetArtSplashDirectory(platformItem romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platformItem)
-	return platform.GetCurrent().GetArtSplashDirectory(romDir, platformItem.FSSlug, platformItem.Name)
+func (c Config) GetArtSplashDirectory(pi romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(pi)
+	return platform.GetCurrent().GetArtSplashDirectory(romDir, pi.FSSlug, pi.Name)
 }
 
-func (c Config) GetArtMarqueeDirectory(platformItem romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platformItem)
-	return platform.GetCurrent().GetArtMarqueeDirectory(romDir, platformItem.FSSlug, platformItem.Name)
+func (c Config) GetArtMarqueeDirectory(pi romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(pi)
+	return platform.GetCurrent().GetArtMarqueeDirectory(romDir, pi.FSSlug, pi.Name)
 }
 
-func (c Config) GetArtVideoDirectory(platformItem romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platformItem)
-	return platform.GetCurrent().GetArtVideoDirectory(romDir, platformItem.FSSlug, platformItem.Name)
+func (c Config) GetArtVideoDirectory(pi romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(pi)
+	return platform.GetCurrent().GetArtVideoDirectory(romDir, pi.FSSlug, pi.Name)
 }
 
-func (c Config) GetArtThumbnailDirectory(platformItem romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platformItem)
-	return platform.GetCurrent().GetArtThumbnailDirectory(romDir, platformItem.FSSlug, platformItem.Name)
+func (c Config) GetArtThumbnailDirectory(pi romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(pi)
+	return platform.GetCurrent().GetArtThumbnailDirectory(romDir, pi.FSSlug, pi.Name)
 }
 
-func (c Config) GetArtBezelDirectory(platformItem romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platformItem)
-	return platform.GetCurrent().GetArtBezelDirectory(romDir, platformItem.FSSlug, platformItem.Name)
+func (c Config) GetArtBezelDirectory(pi romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(pi)
+	return platform.GetCurrent().GetArtBezelDirectory(romDir, pi.FSSlug, pi.Name)
 }
 
-func (c Config) GetManualDirectory(platformItem romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platformItem)
-	return platform.GetCurrent().GetManualDirectory(romDir, platformItem.FSSlug, platformItem.Name)
+func (c Config) GetManualDirectory(pi romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(pi)
+	return platform.GetCurrent().GetManualDirectory(romDir, pi.FSSlug, pi.Name)
 }
 
-func (c Config) GetFanartDirectory(platformItem romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platformItem)
-	return platform.GetCurrent().GetFanartDirectory(romDir, platformItem.FSSlug, platformItem.Name)
+func (c Config) GetFanartDirectory(pi romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(pi)
+	return platform.GetCurrent().GetFanartDirectory(romDir, pi.FSSlug, pi.Name)
 }
 
-func (c Config) GetBoxbackDirectory(platformItem romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platformItem)
-	return platform.GetCurrent().GetBoxbackDirectory(romDir, platformItem.FSSlug, platformItem.Name)
+func (c Config) GetBoxbackDirectory(pi romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(pi)
+	return platform.GetCurrent().GetBoxbackDirectory(romDir, pi.FSSlug, pi.Name)
 }
 
-func (c Config) ShowCollections(host romm.Host) bool {
-	if !c.ShowRegularCollections && !c.ShowSmartCollections && !c.ShowVirtualCollections {
-		return false
-	}
-
-	// Check cache first
-	if cm := cache.GetCacheManager(); cm != nil && cm.HasCollections() {
-		return true
-	}
-
-	// Fallback to network check
-	rc := romm.NewClientFromHost(host, c.ApiTimeout.Duration())
-
-	if c.ShowRegularCollections {
-		col, err := rc.GetCollections()
-		if err == nil && len(col) > 0 {
-			return true
-		}
-	}
-
-	if c.ShowSmartCollections {
-		smartCol, err := rc.GetSmartCollections()
-		if err == nil && len(smartCol) > 0 {
-			return true
-		}
-	}
-
-	if c.ShowVirtualCollections {
-		virtualCol, err := rc.GetVirtualCollections()
-		if err == nil && len(virtualCol) > 0 {
-			return true
-		}
-	}
-
-	return false
-}

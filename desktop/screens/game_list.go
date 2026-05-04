@@ -36,15 +36,15 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 		listBox.Append(row)
 	}
 
+	searchBar := gtk.NewSearchEntry()
+	searchBar.SetPlaceholderText("Search games...")
+
 	listBox.SetFilterFunc(func(row *gtk.ListBoxRow) bool {
 		text := strings.ToLower(searchBar.Text())
 		if text == "" {
 			return true
 		}
-		
-		// We need to retrieve the game from the row.
-		// Since we used NewGameRow, we can cast it if we exported the game field,
-		// or just use the title/subtitle of the ActionRow.
+
 		if actionRow, ok := row.Child().(*adw.ActionRow); ok {
 			title := strings.ToLower(actionRow.Title())
 			subtitle := strings.ToLower(actionRow.Subtitle())
@@ -53,18 +53,13 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 		return true
 	})
 
-	listBox.ConnectRowActivated(func(row *gtk.ListBoxRow) {
-		idx := row.Index()
-		// Search might change the index if we use a filtered list model,
-		// but for a simple ListBox we can just look up the row data.
-		// For now, keep it simple.
-		router.Navigate(NewGameDetailsScreen(router, s.games[idx]))
-	})
-
-	searchBar := gtk.NewSearchEntry()
-	searchBar.SetPlaceholderText("Search games...")
 	searchBar.ConnectChanged(func() {
 		listBox.InvalidateFilter()
+	})
+
+	listBox.ConnectRowActivated(func(row *gtk.ListBoxRow) {
+		idx := row.Index()
+		router.Navigate(NewGameDetailsScreen(router, s.games[idx]))
 	})
 
 	scrolled := gtk.NewScrolledWindow()
@@ -76,7 +71,7 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	box.Append(header)
-	box.Append(boxWithSearch(searchBar, scrolled))
+	box.Append(scrolled)
 
 	page := adw.NewNavigationPage(box, s.platform.Name)
 	return page

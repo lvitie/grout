@@ -30,16 +30,13 @@ func (s *CollectionsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	for _, c := range s.collections {
 		row := adw.NewActionRow()
 		row.SetTitle(c.Name)
-		row.SetSubtitle(c.Type)
+		row.SetSubtitle(c.Description)
 		row.SetSelectable(true)
 		listBox.Append(row)
 	}
 
 	listBox.ConnectRowActivated(func(row *gtk.ListBoxRow) {
-		idx := row.Index()
-		// Navigate to a game list for this collection
-		// We'll need a way to show games from a collection
-		// For now, it's a placeholder
+		_ = row.Index() // TODO: navigate to collection game list
 	})
 
 	scrolled := gtk.NewScrolledWindow()

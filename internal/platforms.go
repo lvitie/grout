@@ -1,10 +1,7 @@
 package internal
 
 import (
-	"fmt"
-	"grout/cache"
 	"grout/romm"
-	"time"
 )
 
 // SortPlatformsByOrder sorts platforms based on the saved order.
@@ -72,31 +69,3 @@ func PrunePlatformOrder(order []string, mappings map[string]DirectoryMapping) []
 	return pruned
 }
 
-func GetMappedPlatforms(host romm.Host, mappings map[string]DirectoryMapping, timeout ...time.Duration) ([]romm.Platform, error) {
-	var rommPlatforms []romm.Platform
-	var err error
-
-	if cm := cache.GetCacheManager(); cm != nil {
-		rommPlatforms, err = cm.GetPlatforms()
-	}
-	if len(rommPlatforms) == 0 {
-		c := romm.NewClientFromHost(host, timeout...)
-		rommPlatforms, err = c.GetPlatforms()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get platforms from RomM: %w", err)
-		}
-	}
-
-	romm.DisambiguatePlatformNames(rommPlatforms)
-
-	var platforms []romm.Platform
-
-	for _, platform := range rommPlatforms {
-		_, exists := mappings[platform.FSSlug]
-		if exists && platform.ROMCount > 0 {
-			platforms = append(platforms, platform)
-		}
-	}
-
-	return platforms, nil
-}

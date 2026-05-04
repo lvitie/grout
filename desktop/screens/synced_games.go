@@ -1,6 +1,7 @@
 package screens
 
 import (
+	"fmt"
 	"grout/cache"
 	"grout/desktop"
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -19,13 +20,16 @@ func (s *SyncedGamesScreen) Build(router *desktop.Router) gtk.Widgetter {
 	listBox := gtk.NewListBox()
 	
 	cm := cache.GetCacheManager()
-	ids, _ := cm.GetSyncedRomIDs()
+	host := router.State().GetHost()
+	deviceID := ""
+	if host != nil {
+		deviceID = host.DeviceID
+	}
+	ids := cm.GetSyncedRomIDs(deviceID)
 	
 	for _, id := range ids {
-		// Fetch ROM name from cache
-		rom, _ := cm.GetRom(id)
 		row := adw.NewActionRow()
-		row.SetTitle(rom.Name)
+		row.SetTitle(fmt.Sprintf("ROM #%d", id))
 		listBox.Append(row)
 	}
 

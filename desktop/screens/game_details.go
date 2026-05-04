@@ -39,7 +39,7 @@ func (s *GameDetailsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	artPlaceholder.SetFromIconName("image-missing-symbolic")
 	box.Append(artPlaceholder)
 
-	desc := gtk.NewLabel(s.game.Metadatum.Description)
+	desc := gtk.NewLabel(s.game.Summary)
 	desc.SetWrap(true)
 	desc.SetMaxWidthChars(60)
 	box.Append(desc)

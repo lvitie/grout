@@ -3,8 +3,6 @@ package screens
 import (
 	"fmt"
 	"grout/desktop"
-	"grout/internal/fileutil"
-	"grout/platform"
 	"grout/romm"
 	"os"
 	"path/filepath"
@@ -37,7 +35,7 @@ func (s *DownloadScreen) Build(router *desktop.Router) gtk.Widgetter {
 	progress.SetFraction(0.0)
 
 	box := gtk.NewBox(gtk.OrientationVertical, 20)
-	box.SetValign(gtk.AlignCenter)
+	box.SetVAlign(gtk.AlignCenter)
 	box.Append(progress)
 
 	statusPage.SetChild(box)
@@ -61,7 +59,6 @@ func (s *DownloadScreen) Build(router *desktop.Router) gtk.Widgetter {
 		}
 
 		// Determine target path
-		p := platform.GetCurrent()
 		config := state.GetConfig()
 		romDir := config.GetPlatformRomDirectory(romm.Platform{
 			ID:     s.game.PlatformID,

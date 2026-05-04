@@ -163,7 +163,7 @@ func DownloadAndCacheArtwork(rom romm.Rom, kind artutil.ArtKind, host romm.Host)
 	}
 	outFile.Close()
 
-	if err := imageutil.ProcessArtImage(cachePath); err != nil {
+	if err := imageutil.ProcessArtImage(cachePath, 800, 1200); err != nil {
 		logger.Warn("Failed to process artwork image", "path", cachePath, "error", err)
 		os.Remove(cachePath)
 		return fmt.Errorf("failed to process artwork: %w", err)

@@ -1,16 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"grout/desktop"
 	"grout/desktop/controller"
 	"grout/desktop/screens"
 	"grout/internal"
 	"grout/platform"
 	"os"
-	"fmt"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
-	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
 func main() {
@@ -34,7 +33,7 @@ func main() {
 }
 
 func activate(app *adw.Application, state *desktop.AppState) {
-	window := adw.NewApplicationWindow(app)
+	window := adw.NewApplicationWindow(&app.Application)
 	window.SetTitle("Grout")
 	window.SetDefaultSize(1280, 720)
 

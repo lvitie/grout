@@ -1,10 +1,10 @@
 package controller
 
 import (
-	"fmt"
 	"grout/internal"
 	"github.com/holoplot/go-evdev"
 	"github.com/diamondburned/gotk4/pkg/core/glib"
+	"path/filepath"
 )
 
 type Handler struct {
@@ -22,20 +22,40 @@ func NewHandler() *Handler {
 func (h *Handler) Start(callback func(Action)) {
 	logger := internal.GetLogger()
 
-	devices, err := evdev.ListInputDevices()
+	files, err := filepath.Glob("/dev/input/event*")
 	if err != nil {
-		logger.Error("Failed to list input devices", "error", err)
+		logger.Error("Failed to glob input devices", "error", err)
 		return
+	}
+
+	var devices []*evdev.InputDevice
+	for _, path := range files {
+		dev, err := evdev.Open(path)
+		if err != nil {
+			continue
+		}
+		devices = append(devices, dev)
 	}
 
 	var gamepad *evdev.InputDevice
 	for _, dev := range devices {
 		// Heuristic: check for buttons common on gamepads
-		if dev.Capabilities[evdev.EV_KEY] != nil {
+		isGamepad := false
+		for _, t := range dev.CapableTypes() {
+			if t == evdev.EV_KEY {
+				isGamepad = true
+				break
+			}
+		}
+
+		if isGamepad {
 			// This is very basic; a real app might let user select device
 			gamepad = dev
-			logger.Info("Found potential gamepad", "name", dev.Name, "path", dev.Path)
+			name, _ := dev.Name()
+			logger.Info("Found potential gamepad", "name", name, "path", dev.Path())
 			break
+		} else {
+			dev.Close()
 		}
 	}
 
