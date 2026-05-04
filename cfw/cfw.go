@@ -20,6 +20,7 @@ const (
 	Koriki   CFW = "KORIKI"
 	Batocera CFW = "BATOCERA"
 	MinUI    CFW = "MINUI"
+	Desktop  CFW = "DESKTOP"
 )
 
 func GetCFW() CFW {
@@ -27,7 +28,7 @@ func GetCFW() CFW {
 	cfw := CFW(cfwEnv)
 
 	switch cfw {
-	case MuOS, NextUI, Knulli, Spruce, ROCKNIX, Trimui, Allium, Onion, Koriki, Batocera, MinUI:
+	case MuOS, NextUI, Knulli, Spruce, ROCKNIX, Trimui, Allium, Onion, Koriki, Batocera, MinUI, Desktop:
 		return cfw
 	default:
 		log.SetOutput(os.Stderr)

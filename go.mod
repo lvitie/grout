@@ -10,6 +10,9 @@ require (
 	github.com/nicksnyder/go-i18n/v2 v2.6.1
 	github.com/piglig/go-qr v0.2.6
 	github.com/sonh/qs v0.6.4
+	github.com/diamondburned/gotk4 v0.3.1
+	github.com/diamondburned/gotk4-adwaita v0.0.0-20241212014936-8c4305414e04
+	github.com/holoplot/go-evdev v0.0.0-20250804134636-ab1d56a1fe83
 	go.uber.org/atomic v1.11.0
 	golang.org/x/image v0.39.0
 	golang.org/x/text v0.36.0
@@ -24,7 +27,6 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
-	github.com/holoplot/go-evdev v0.0.0-20250804134636-ab1d56a1fe83 // indirect
 	github.com/klauspost/compress v1.18.5 // indirect
 	github.com/mattn/go-isatty v0.0.21 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect

@@ -4,15 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"grout/cache"
-	"grout/cfw"
+	"grout/platform"
 	"grout/internal/artutil"
 	"grout/romm"
 	"os"
 	"sync/atomic"
 	"time"
-
-	gaba "github.com/BrandonKowalski/gabagool/v2/pkg/gabagool"
-	"github.com/BrandonKowalski/gabagool/v2/pkg/gabagool/i18n"
 )
 
 var kidModeEnabled atomic.Bool
@@ -200,20 +197,23 @@ func SaveConfig(config *Config) error {
 		config.AdditionalDownloads.Marquee = artutil.ArtKindNone
 	}
 
-	gaba.SetRawLogLevel(string(config.LogLevel))
+	// gaba.SetRawLogLevel(string(config.LogLevel)) // Remove this if it's gabagool specific
+	// For now, I'll just ignore it or implement it in internal/logger.go later.
 
+	/*
 	if err := i18n.SetWithCode(config.Language); err != nil {
-		gaba.GetLogger().Error("Failed to set language", "error", err, "language", config.Language)
+		GetLogger().Error("Failed to set language", "error", err, "language", config.Language)
 	}
+	*/
 
 	pretty, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
-		gaba.GetLogger().Error("Failed to marshal config to JSON", "error", err)
+		GetLogger().Error("Failed to marshal config to JSON", "error", err)
 		return err
 	}
 
 	if err := os.WriteFile("config.json", pretty, 0644); err != nil {
-		gaba.GetLogger().Error("Failed to write config file", "error", err)
+		GetLogger().Error("Failed to write config file", "error", err)
 		return err
 	}
 
@@ -315,7 +315,7 @@ func (c Config) GetShowVirtualCollections() bool { return c.ShowVirtualCollectio
 func (c Config) ResolveFSSlug(fsSlug string) string {
 	if c.PlatformsBinding != nil {
 		if bound, ok := c.PlatformsBinding[fsSlug]; ok {
-			gaba.GetLogger().Debug("Using platform binding for CFW lookup",
+			GetLogger().Debug("Using platform binding for CFW lookup",
 				"fsSlug", fsSlug, "boundTo", bound)
 			return bound
 		}
@@ -331,7 +331,7 @@ func (c Config) ResolveRommFSSlug(cfwKey string) string {
 	if c.PlatformsBinding != nil {
 		for rommSlug, cfwSlug := range c.PlatformsBinding {
 			if cfwSlug == cfwKey {
-				gaba.GetLogger().Debug("Using inverse platform binding",
+				GetLogger().Debug("Using inverse platform binding",
 					"cfwKey", cfwKey, "rommFSSlug", rommSlug)
 				return rommSlug
 			}
@@ -346,57 +346,61 @@ func (c Config) GetPlatformRomDirectory(platform romm.Platform) string {
 		rp = mapping.RelativePath
 	}
 	effectiveFSSlug := c.ResolveFSSlug(platform.FSSlug)
-	return cfw.GetPlatformRomDirectory(rp, effectiveFSSlug)
+	
+	// Join with base rom directory from platform
+	baseRomDir := platform.GetCurrent().RomDirectory()
+	
+	return filepath.Join(baseRomDir, rp)
 }
 
-func (c Config) GetArtDirectory(platform romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platform)
-	return cfw.GetArtDirectory(romDir, platform.FSSlug, platform.Name)
+func (c Config) GetArtDirectory(platformItem romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(platformItem)
+	return platform.GetCurrent().GetArtDirectory(romDir, platformItem.FSSlug, platformItem.Name)
 }
 
-func (c Config) GetArtPreviewDirectory(platform romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platform)
-	return cfw.GetArtPreviewDirectory(romDir, platform.FSSlug, platform.Name)
+func (c Config) GetArtPreviewDirectory(platformItem romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(platformItem)
+	return platform.GetCurrent().GetArtPreviewDirectory(romDir, platformItem.FSSlug, platformItem.Name)
 }
 
-func (c Config) GetArtSplashDirectory(platform romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platform)
-	return cfw.GetArtSplashDirectory(romDir, platform.FSSlug, platform.Name)
+func (c Config) GetArtSplashDirectory(platformItem romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(platformItem)
+	return platform.GetCurrent().GetArtSplashDirectory(romDir, platformItem.FSSlug, platformItem.Name)
 }
 
-func (c Config) GetArtMarqueeDirectory(platform romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platform)
-	return cfw.GetArtMarqueeDirectory(romDir, platform.FSSlug, platform.Name)
+func (c Config) GetArtMarqueeDirectory(platformItem romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(platformItem)
+	return platform.GetCurrent().GetArtMarqueeDirectory(romDir, platformItem.FSSlug, platformItem.Name)
 }
 
-func (c Config) GetArtVideoDirectory(platform romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platform)
-	return cfw.GetArtVideoDirectory(romDir, platform.FSSlug, platform.Name)
+func (c Config) GetArtVideoDirectory(platformItem romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(platformItem)
+	return platform.GetCurrent().GetArtVideoDirectory(romDir, platformItem.FSSlug, platformItem.Name)
 }
 
-func (c Config) GetArtThumbnailDirectory(platform romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platform)
-	return cfw.GetArtThumbnailDirectory(romDir, platform.FSSlug, platform.Name)
+func (c Config) GetArtThumbnailDirectory(platformItem romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(platformItem)
+	return platform.GetCurrent().GetArtThumbnailDirectory(romDir, platformItem.FSSlug, platformItem.Name)
 }
 
-func (c Config) GetArtBezelDirectory(platform romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platform)
-	return cfw.GetArtBezelDirectory(romDir, platform.FSSlug, platform.Name)
+func (c Config) GetArtBezelDirectory(platformItem romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(platformItem)
+	return platform.GetCurrent().GetArtBezelDirectory(romDir, platformItem.FSSlug, platformItem.Name)
 }
 
-func (c Config) GetManualDirectory(platform romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platform)
-	return cfw.GetManualDirectory(romDir, platform.FSSlug, platform.Name)
+func (c Config) GetManualDirectory(platformItem romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(platformItem)
+	return platform.GetCurrent().GetManualDirectory(romDir, platformItem.FSSlug, platformItem.Name)
 }
 
-func (c Config) GetFanartDirectory(platform romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platform)
-	return cfw.GetFanartDirectory(romDir, platform.FSSlug, platform.Name)
+func (c Config) GetFanartDirectory(platformItem romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(platformItem)
+	return platform.GetCurrent().GetFanartDirectory(romDir, platformItem.FSSlug, platformItem.Name)
 }
 
-func (c Config) GetBoxbackDirectory(platform romm.Platform) string {
-	romDir := c.GetPlatformRomDirectory(platform)
-	return cfw.GetBoxbackDirectory(romDir, platform.FSSlug, platform.Name)
+func (c Config) GetBoxbackDirectory(platformItem romm.Platform) string {
+	romDir := c.GetPlatformRomDirectory(platformItem)
+	return platform.GetCurrent().GetBoxbackDirectory(romDir, platformItem.FSSlug, platformItem.Name)
 }
 
 func (c Config) ShowCollections(host romm.Host) bool {

@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"grout/internal"
 	"grout/romm"
 	"sync"
 
@@ -114,7 +115,7 @@ func (b *BackgroundSync) Stop() {
 	close(b.stop)
 	b.mu.Unlock()
 
-	gaba.GetLogger().Debug("BackgroundSync: Stop requested")
+	internal.GetLogger().Debug("BackgroundSync: Stop requested")
 }
 
 func (b *BackgroundSync) SetSynced() {
@@ -122,7 +123,7 @@ func (b *BackgroundSync) SetSynced() {
 }
 
 func (b *BackgroundSync) worker() {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 	defer b.wg.Done()
 
 	for {
@@ -137,7 +138,7 @@ func (b *BackgroundSync) worker() {
 }
 
 func (b *BackgroundSync) runSync(req syncRequest) {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	defer func() {
 		if r := recover(); r != nil {

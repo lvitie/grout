@@ -3,6 +3,7 @@ package cfw
 import (
 	"grout/internal/fileutil"
 	"grout/internal/stringutil"
+	"grout/platform"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,24 +12,8 @@ import (
 	gaba "github.com/BrandonKowalski/gabagool/v2/pkg/gabagool"
 )
 
-// RomScanConfig provides configuration needed for ROM scanning.
-// Implemented by internal.Config to avoid circular imports.
-type RomScanConfig interface {
-	GetDirectoryMapping(fsSlug string) (relativePath string, ok bool)
-	ResolveRommFSSlug(cfwKey string) string
-}
-
-type LocalRomFile struct {
-	RomID    int
-	RomName  string
-	FSSlug   string
-	FileName string
-	FilePath string
-}
-
-type LocalRomScan map[string][]LocalRomFile
-
-func ScanRoms(config RomScanConfig) LocalRomScan {
+// ScanRoms scans local ROM files.
+func ScanRoms(config platform.RomScanConfig) platform.LocalRomScan {
 	logger := gaba.GetLogger()
 	result := make(map[string][]LocalRomFile)
 	currentCFW := GetCFW()
@@ -53,9 +38,9 @@ func ScanRoms(config RomScanConfig) LocalRomScan {
 	return result
 }
 
-func scanRomsByPlatform(baseRomDir string, platformMap map[string][]string, config RomScanConfig, currentCFW CFW) map[string][]LocalRomFile {
+func scanRomsByPlatform(baseRomDir string, platformMap map[string][]string, config platform.RomScanConfig, currentCFW CFW) map[string][]platform.LocalRomFile {
 	logger := gaba.GetLogger()
-	result := make(map[string][]LocalRomFile)
+	result := make(map[string][]platform.LocalRomFile)
 
 	if currentCFW == NextUI {
 		entries, err := os.ReadDir(baseRomDir)
@@ -109,7 +94,7 @@ func scanRomsByPlatform(baseRomDir string, platformMap map[string][]string, conf
 	} else {
 		type platformResult struct {
 			fsSlug string
-			roms   []LocalRomFile
+			roms   []platform.LocalRomFile
 		}
 
 		resultChan := make(chan platformResult, len(platformMap))
@@ -172,9 +157,9 @@ func scanRomsByPlatform(baseRomDir string, platformMap map[string][]string, conf
 	return result
 }
 
-func scanRomDirectory(fsSlug, romDir string) []LocalRomFile {
+func scanRomDirectory(fsSlug, romDir string) []platform.LocalRomFile {
 	logger := gaba.GetLogger()
-	var roms []LocalRomFile
+	var roms []platform.LocalRomFile
 
 	entries, err := os.ReadDir(romDir)
 	if err != nil {
@@ -184,7 +169,7 @@ func scanRomDirectory(fsSlug, romDir string) []LocalRomFile {
 
 	visibleFiles := fileutil.FilterVisibleFiles(entries)
 	for _, entry := range visibleFiles {
-		rom := LocalRomFile{
+		rom := platform.LocalRomFile{
 			FSSlug:   fsSlug,
 			FileName: entry.Name(),
 			FilePath: filepath.Join(romDir, entry.Name()),

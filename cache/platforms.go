@@ -2,9 +2,8 @@ package cache
 
 import (
 	"encoding/json"
+	"grout/internal"
 	"grout/romm"
-
-	gaba "github.com/BrandonKowalski/gabagool/v2/pkg/gabagool"
 )
 
 func (cm *Manager) GetPlatforms() ([]romm.Platform, error) {
@@ -59,7 +58,7 @@ func (cm *Manager) SavePlatforms(platforms []romm.Platform) error {
 		return ErrNotInitialized
 	}
 
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
@@ -123,7 +122,7 @@ func (cm *Manager) PurgeDeletedPlatforms(validIDs []int) (int64, error) {
 		return 0, nil
 	}
 
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	cm.mu.Lock()
 	defer cm.mu.Unlock()

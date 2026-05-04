@@ -1,12 +1,12 @@
 package cache
 
 import (
+	"grout/internal"
 	"grout/romm"
 	"runtime"
 	"sync"
 	"time"
 
-	gaba "github.com/BrandonKowalski/gabagool/v2/pkg/gabagool"
 	"go.uber.org/atomic"
 )
 
@@ -22,7 +22,7 @@ type SyncStats struct {
 }
 
 func (cm *Manager) populateCache(platforms []romm.Platform, progress *atomic.Float64) (SyncStats, error) {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 	stats := SyncStats{Platforms: len(platforms)}
 
 	if len(platforms) == 0 {
@@ -168,7 +168,7 @@ func (cm *Manager) fetchPlatformGames(platform romm.Platform, opts *fetchOpts) (
 		opts = &fetchOpts{}
 	}
 
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 	client := opts.client
 	if client == nil {
 		client = romm.NewClientFromHost(cm.host, cm.config.GetApiTimeout())
@@ -236,7 +236,7 @@ func (cm *Manager) fetchPlatformGames(platform romm.Platform, opts *fetchOpts) (
 }
 
 func (cm *Manager) fetchAndCacheCollectionsWithProgress(progress *atomic.Float64, progressStart, progressEnd float64) int {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	showRegular := cm.config.GetShowCollections()
 	showSmart := cm.config.GetShowSmartCollections()

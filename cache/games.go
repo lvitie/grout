@@ -4,12 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"grout/internal"
 	"grout/romm"
 	"strconv"
 	"strings"
 	"unicode"
-
-	gaba "github.com/BrandonKowalski/gabagool/v2/pkg/gabagool"
 )
 
 // normalizeForMatch strips punctuation, collapses whitespace, and lowercases
@@ -402,7 +401,7 @@ func (cm *Manager) SaveCollectionGames(collection romm.Collection, games []romm.
 		return nil
 	}
 
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
@@ -503,7 +502,7 @@ func (cm *Manager) SaveAllCollectionMappings(collections []romm.Collection) erro
 		return nil
 	}
 
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
@@ -1168,7 +1167,7 @@ func (cm *Manager) PurgeDeletedGames(validIDs []int) (int64, error) {
 		return 0, nil
 	}
 
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	cm.mu.Lock()
 	defer cm.mu.Unlock()

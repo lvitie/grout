@@ -8,7 +8,8 @@ import (
 	"image/png"
 	"os"
 
-	"github.com/BrandonKowalski/gabagool/v2/pkg/gabagool"
+	"image/png"
+	"os"
 	goqr "github.com/piglig/go-qr"
 	"golang.org/x/image/draw"
 	_ "golang.org/x/image/webp" // Register WebP decoder
@@ -34,7 +35,7 @@ func CreateTempQRCode(content string, size int) (string, error) {
 	return tempFile.Name(), nil
 }
 
-func ProcessArtImage(inputPath string) error {
+func ProcessArtImage(inputPath string, maxWidth, maxHeight int) error {
 	inputFile, err := os.Open(inputPath)
 	if err != nil {
 		return fmt.Errorf("failed to open image: %w", err)
@@ -47,8 +48,8 @@ func ProcessArtImage(inputPath string) error {
 	}
 	inputFile.Close()
 
-	windowWidth := int(gabagool.GetWindow().GetWidth()) / 2
-	windowHeight := int(gabagool.GetWindow().GetHeight()) / 2
+	windowWidth := maxWidth
+	windowHeight := maxHeight
 
 	bounds := img.Bounds()
 	imgWidth := bounds.Dx()

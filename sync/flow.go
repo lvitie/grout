@@ -3,10 +3,10 @@ package sync
 import (
 	"fmt"
 	"grout/cache"
-	"grout/cfw"
 	"grout/internal"
 	"grout/internal/fileutil"
 	"grout/internal/pspdb"
+	"grout/platform"
 	"grout/romm"
 	"grout/version"
 	"os"
@@ -15,14 +15,12 @@ import (
 	"strings"
 	gosync "sync"
 	"time"
-
-	gaba "github.com/BrandonKowalski/gabagool/v2/pkg/gabagool"
 )
 
 const maxConcurrentRequests = 8
 
 func ResolveSaveSync(client *romm.Client, config *internal.Config, deviceID string) ([]SyncItem, error) {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 	logger.Debug("Starting save sync resolve", "deviceID", deviceID)
 
 	localSaves := ScanSaves(config)
@@ -84,23 +82,22 @@ func ExecuteSaveSync(client *romm.Client, config *internal.Config, deviceID stri
 func RegisterDevice(client *romm.Client, name string) (romm.Device, error) {
 	return client.RegisterDevice(romm.RegisterDeviceRequest{
 		Name:          name,
-		Platform:      string(cfw.GetCFW()),
+		Platform:      platform.GetCurrent().Name(),
 		Client:        "grout",
 		ClientVersion: version.Get().Version,
 	})
 }
 
 func ScanSaves(config *internal.Config) []LocalSave {
-	logger := gaba.GetLogger()
-	currentCFW := cfw.GetCFW()
-
-	baseSavePath := cfw.BaseSavePath()
+	logger := internal.GetLogger()
+	p := platform.GetCurrent()
+	baseSavePath := p.BaseSavePath()
 	if baseSavePath == "" {
 		logger.Error("No save path for current CFW")
 		return nil
 	}
 
-	emulatorMap := cfw.EmulatorFolderMap(currentCFW)
+	emulatorMap := p.EmulatorFolderMap()
 	if emulatorMap == nil {
 		logger.Error("No emulator folder map for current CFW")
 		return nil
@@ -251,7 +248,7 @@ func ScanSaves(config *internal.Config) []LocalSave {
 // FetchRemoteSaves fetches saves with device_id for each ROM that has a local save.
 // This returns full save data including device_syncs for conflict detection.
 func FetchRemoteSaves(client *romm.Client, localSaves []LocalSave, deviceID string) (map[int][]romm.Save, error) {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	seen := make(map[int]bool)
 	for _, ls := range localSaves {
@@ -333,7 +330,7 @@ func NewSaveUploadActions(saves []LocalSave, config *internal.Config) []SyncItem
 }
 
 func DetermineActions(localSaves []LocalSave, remoteSaves map[int][]romm.Save, deviceID string, config *internal.Config) []SyncItem {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 	var items []SyncItem
 
 	for _, ls := range localSaves {
@@ -385,7 +382,7 @@ func DetermineActions(localSaves []LocalSave, remoteSaves map[int][]romm.Save, d
 }
 
 func determineAction(remoteSave *romm.Save, localSave *LocalSave, deviceID string) SyncAction {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	if remoteSave == nil {
 		logger.Debug("No remote save found, will upload", "romID", localSave.RomID)
@@ -487,7 +484,7 @@ func selectSaveForSync(saves []romm.Save, preferredSlot string) *romm.Save {
 }
 
 func ExecuteActions(client *romm.Client, config *internal.Config, deviceID string, items []SyncItem, progressFn func(current, total int)) SyncReport {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 	report := SyncReport{}
 
 	actionable := 0
@@ -542,7 +539,7 @@ func ExecuteActions(client *romm.Client, config *internal.Config, deviceID strin
 }
 
 func upload(client *romm.Client, deviceID string, item *SyncItem) bool {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	logger.Debug("Uploading save", "romID", item.LocalSave.RomID, "romName", item.LocalSave.RomName, "file", item.LocalSave.FilePath)
 
@@ -608,7 +605,7 @@ func upload(client *romm.Client, deviceID string, item *SyncItem) bool {
 }
 
 func download(client *romm.Client, config *internal.Config, deviceID string, item *SyncItem) bool {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	if item.RemoteSave == nil {
 		logger.Error("No remote save to download", "romID", item.LocalSave.RomID)
@@ -747,9 +744,9 @@ func download(client *romm.Client, config *internal.Config, deviceID string, ite
 }
 
 func DiscoverRemoteSaves(client *romm.Client, config *internal.Config, localSaves []LocalSave, deviceID string) ([]SyncItem, error) {
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
-	scan := cfw.ScanRoms(config)
+	scan := platform.GetCurrent().ScanRoms(config)
 	resolved := ResolveLocalRoms(scan)
 	if len(resolved) == 0 {
 		return nil, nil
@@ -861,7 +858,7 @@ func cleanupBackups(backupDir string, baseName string, limit int) {
 		return
 	}
 
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 	entries, err := os.ReadDir(backupDir)
 	if err != nil {
 		return
@@ -928,7 +925,7 @@ func extractPSPGameID(dirName string) string {
 func ResolveSaveDirectory(fsSlug string, config *internal.Config) string {
 	if config != nil && config.SaveDirectoryMappings != nil {
 		if mapped, ok := config.SaveDirectoryMappings[fsSlug]; ok && mapped != "" {
-			baseSavePath := cfw.BaseSavePath()
+			baseSavePath := platform.GetCurrent().BaseSavePath()
 			if baseSavePath != "" {
 				return filepath.Join(baseSavePath, mapped)
 			}
@@ -940,5 +937,5 @@ func ResolveSaveDirectory(fsSlug string, config *internal.Config) string {
 		effectiveFSSlug = config.ResolveFSSlug(fsSlug)
 	}
 
-	return cfw.GetSaveDirectory(effectiveFSSlug)
+	return platform.GetCurrent().GetSaveDirectory(effectiveFSSlug)
 }
