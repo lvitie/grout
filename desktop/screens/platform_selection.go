@@ -43,6 +43,20 @@ func (s *PlatformSelectionScreen) Build(router *desktop.Router) gtk.Widgetter {
 	scrolled := gtk.NewScrolledWindow()
 	scrolled.SetChild(listBox)
 
-	page := adw.NewNavigationPage(scrolled, "Platforms")
+	header := adw.NewHeaderBar()
+	header.SetTitleWidget(adw.NewWindowTitle("Grout", ""))
+
+	settingsBtn := gtk.NewButtonFromIconName("emblem-system-symbolic")
+	settingsBtn.SetTooltipText("Settings")
+	settingsBtn.ConnectClicked(func() {
+		router.Navigate(NewSettingsScreen(router))
+	})
+	header.PackEnd(settingsBtn)
+
+	box := gtk.NewBox(gtk.OrientationVertical, 0)
+	box.Append(header)
+	box.Append(scrolled)
+
+	page := adw.NewNavigationPage(box, "Grout")
 	return page
 }

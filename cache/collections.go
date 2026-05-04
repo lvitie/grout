@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"grout/romm"
 
-	gaba "github.com/BrandonKowalski/gabagool/v2/pkg/gabagool"
+	"grout/internal"
 )
 
 func (cm *Manager) GetCollections() ([]romm.Collection, error) {
@@ -112,7 +112,7 @@ func (cm *Manager) PurgeDeletedCollections(validIDs []int) (int64, error) {
 		return 0, nil
 	}
 
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
@@ -184,7 +184,7 @@ func (cm *Manager) SaveCollections(collections []romm.Collection) error {
 		return ErrNotInitialized
 	}
 
-	logger := gaba.GetLogger()
+	logger := internal.GetLogger()
 
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
