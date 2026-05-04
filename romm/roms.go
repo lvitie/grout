@@ -173,6 +173,10 @@ func (c *Client) GetRom(id int) (Rom, error) {
 	err := c.doRequest("GET", path, nil, nil, &rom)
 	return rom, err
 }
+func (c *Client) DownloadRom(id int) ([]byte, error) {
+	path := fmt.Sprintf(endpointRomContent, id)
+	return c.doRequestRaw("GET", path, nil)
+}
 func joinPathWithQuery(base string, elem ...string) (string, error) {
 	last := elem[len(elem)-1]
 	// because url.JoinPath doesn't handle query parameters without encoding all the string

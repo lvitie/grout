@@ -34,11 +34,19 @@ func (s *SettingsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	downloadArtRow.SetTitle("Download Artwork")
 	downloadArtRow.SetSubtitle("Automatically fetch boxart from RomM")
 	downloadArtRow.SetActive(s.config.DownloadArt)
+	downloadArtRow.ConnectNotify("active", func() {
+		s.config.DownloadArt = downloadArtRow.Active()
+		s.config.Save()
+	})
 	generalGroup.Add(downloadArtRow)
 
 	unzipRow := adw.NewSwitchRow()
 	unzipRow.SetTitle("Unzip Downloads")
 	unzipRow.SetActive(s.config.UnzipDownloads)
+	unzipRow.ConnectNotify("active", func() {
+		s.config.UnzipDownloads = unzipRow.Active()
+		s.config.Save()
+	})
 	generalGroup.Add(unzipRow)
 
 	// Appearance Group
@@ -49,6 +57,10 @@ func (s *SettingsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	showBoxArtRow := adw.NewSwitchRow()
 	showBoxArtRow.SetTitle("Show Box Art")
 	showBoxArtRow.SetActive(s.config.ShowBoxArt)
+	showBoxArtRow.ConnectNotify("active", func() {
+		s.config.ShowBoxArt = showBoxArtRow.Active()
+		s.config.Save()
+	})
 	appearanceGroup.Add(showBoxArtRow)
 
 	// More Group

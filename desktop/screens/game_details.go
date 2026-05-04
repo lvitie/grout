@@ -46,6 +46,9 @@ func (s *GameDetailsScreen) Build(router *desktop.Router) gtk.Widgetter {
 
 	downloadBtn := gtk.NewButtonWithLabel("Download")
 	downloadBtn.AddCSSClass("suggested-action")
+	downloadBtn.ConnectClicked(func() {
+		router.Navigate(NewDownloadScreen(router, s.game))
+	})
 	box.Append(downloadBtn)
 
 	scrolled := gtk.NewScrolledWindow()

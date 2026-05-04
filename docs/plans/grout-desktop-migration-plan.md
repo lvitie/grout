@@ -384,32 +384,32 @@ go func() {
 
 ### 3.2 Screens still needed
 
-- [ ] `search.go` — dedicated search screen (or merge into game_list header)
-- [ ] `game_options.go` — options menu for a single game
-- [ ] `game_qr.go` — QR code display
-- [ ] `game_filters.go` — filter/sort options
-- [ ] `general_settings.go` — language, display options
-- [ ] `collections_settings.go` — collection visibility toggles
-- [ ] `save_conflict.go` — conflict resolution dialog
-- [ ] `sync_menu.go` — sync hub
-- [ ] `synced_games.go` — list of synced games
-- [ ] `sync_history.go` — sync log
-- [ ] `save_mapping.go` — save slot mapping
-- [ ] `collection_platform.go` — platform selector within a collection
-- [ ] `platform_mapping.go` — directory-to-platform mapping
-- [ ] `bios_download.go` — BIOS file download
-- [ ] `artwork_sync.go` — artwork sync progress
-- [ ] `rebuild_cache.go` — cache rebuild UI
-- [ ] `server_address.go` — edit server URL
+- [x] `search.go` — (merged into game_list header)
+- [x] `game_options.go` — options menu for a single game
+- [x] `game_qr.go` — QR code display
+- [x] `game_filters.go` — filter/sort options
+- [x] `general_settings.go` — (merged into settings.go)
+- [x] `collections_settings.go` — collection visibility toggles
+- [x] `save_conflict.go` — conflict resolution dialog
+- [x] `sync_menu.go` — sync hub
+- [x] `synced_games.go` — list of synced games
+- [x] `sync_history.go` — sync log
+- [x] `save_mapping.go` — save slot mapping
+- [x] `collection_platform.go` — platform selector within a collection
+- [x] `platform_mapping.go` — directory-to-platform mapping
+- [x] `bios_download.go` — BIOS file download
+- [x] `artwork_sync.go` — artwork sync progress
+- [x] `rebuild_cache.go` — cache rebuild UI
+- [x] `server_address.go` — edit server URL
 
 ### 3.3 Screens needing functional wiring (stubs exist but not connected to backend)
 
 - [x] `login.go` — wire login button to `romm.NewClient()` + `ValidateConnection()` + save config
-- [ ] `platform_selection.go` — wire to `cache.GetCacheManager().GetPlatforms()`
-- [ ] `game_list.go` — wire to `cache.GetCacheManager().GetPlatformGames()` + artwork loading
+- [x] `platform_selection.go` — wire to `cache.GetCacheManager().GetPlatforms()`
+- [x] `game_list.go` — wire to `cache.GetCacheManager().GetPlatformGames()` + artwork loading
 - [x] `game_list.go` — replace manual `FirstChild()`/`NextSibling()` search with `listBox.SetFilterFunc()`
-- [ ] `game_details.go` — wire download button to actual download flow
-- [ ] `settings.go` — wire switch changes to `internal.SaveConfig()`
+- [x] `game_details.go` — wire download button to actual download flow
+- [x] `settings.go` — wire switch changes to `internal.SaveConfig()`
 
 ### 3.4 Migration priority (by user flow)
 
