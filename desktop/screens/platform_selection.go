@@ -188,7 +188,14 @@ func (s *PlatformSelectionScreen) buildListView(router *desktop.Router) gtk.Widg
 
 	for _, p := range s.platforms {
 		cell := gtk.NewBox(gtk.OrientationVertical, 6)
-		cell.SetSizeRequest(150, -1)
+		cell.SetSizeRequest(150, 200)
+		cell.SetHAlign(gtk.AlignCenter)
+		cell.SetVAlign(gtk.AlignStart)
+
+		img := gtk.NewImage()
+		img.SetPixelSize(128)
+		img.SetFromIconName("application-x-executable-symbolic")
+		cell.Append(img)
 
 		label := gtk.NewLabel(desktop.EscapeMarkup(p.Name))
 		label.SetWrap(true)

@@ -147,7 +147,14 @@ func (s *CollectionsScreen) Refresh() {
 	if s.flowBox != nil {
 		for _, c := range s.collections {
 			cell := gtk.NewBox(gtk.OrientationVertical, 6)
-			cell.SetSizeRequest(150, -1)
+			cell.SetSizeRequest(150, 200)
+			cell.SetHAlign(gtk.AlignCenter)
+			cell.SetVAlign(gtk.AlignStart)
+
+			img := gtk.NewImage()
+			img.SetPixelSize(128)
+			img.SetFromIconName("folder-saved-search-symbolic")
+			cell.Append(img)
 
 			label := gtk.NewLabel(desktop.EscapeMarkup(c.Name))
 			label.SetWrap(true)

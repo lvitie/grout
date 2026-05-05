@@ -16,7 +16,9 @@ type GameGridCell struct {
 
 func NewGameGridCell(game romm.Rom) *GameGridCell {
 	box := gtk.NewBox(gtk.OrientationVertical, 6)
-	box.SetSizeRequest(150, -1)
+	box.SetSizeRequest(150, 200)
+	box.SetHAlign(gtk.AlignCenter)
+	box.SetVAlign(gtk.AlignStart)
 
 	img := gtk.NewImage()
 	img.SetPixelSize(128)
