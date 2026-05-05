@@ -408,19 +408,19 @@ go func() {
 - [x] `platform_selection.go` — wire to `cache.GetCacheManager().GetPlatforms()`
 - [x] `game_list.go` — wire to `cache.GetCacheManager().GetPlatformGames()` + artwork loading
 - [x] `game_list.go` — replace manual `FirstChild()`/`NextSibling()` search with `listBox.SetFilterFunc()`
-- [x] `game_details.go` — wire download button to actual download flow
+- [x] `game_details.go` — wire download button to actual download flow (Basic implementation exists)
 - [x] `settings.go` — wire switch changes to `internal.SaveConfig()`
 
 ### 3.4 Migration priority (by user flow)
 
 | Priority | Screen | GTK4 widget | Status |
 |---|---|---|---|
-| 1 | Login | `adw.EntryRow` + `adw.PasswordEntryRow` | Stub |
-| 2 | Platform Selection | `gtk.ListBox` + `adw.ActionRow` | Stub |
-| 3 | Game List | `gtk.ListView` + factory | Stub |
-| 4 | Game Details | `adw.Clamp` + cover image + metadata | Stub |
-| 5 | Settings | `adw.PreferencesPage` | Stub |
-| 6 | Download progress | `adw.StatusPage` + `gtk.ProgressBar` | Stub |
+| 1 | Login | `adw.EntryRow` + `adw.PasswordEntryRow` | Done |
+| 2 | Platform Selection | `gtk.ListBox` + `adw.ActionRow` | Done |
+| 3 | Game List | `gtk.ListView` + factory | Done |
+| 4 | Game Details | `adw.Clamp` + cover image + metadata | Wired |
+| 5 | Settings | `adw.PreferencesPage` | Wired |
+| 6 | Download progress | `adw.StatusPage` + `gtk.ProgressBar` | Wired |
 | 7 | Search | `gtk.SearchEntry` + filter | Not started |
 | 8 | Save sync screens | `adw.StatusPage` + progress | Stub |
 | 9 | Collections | `gtk.ListBox` | Stub |
