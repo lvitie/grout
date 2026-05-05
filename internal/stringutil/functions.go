@@ -3,6 +3,7 @@ package stringutil
 import (
 	"fmt"
 	"grout/romm"
+	"html"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -97,6 +98,7 @@ func nameCleaner(name string, stripTag bool) (string, string) {
 
 func PrepareRomNames(games []romm.Rom) []romm.Rom {
 	for i := range games {
+		games[i].Name = html.UnescapeString(games[i].Name)
 		games[i].DisplayName = PrepareRomName(games[i].Name, games[i].Regions)
 	}
 
@@ -110,7 +112,7 @@ func PrepareRomNames(games []romm.Rom) []romm.Rom {
 func PrepareRomName(name string, regions []string) string {
 	r := strings.Join(regions, ", ")
 
-	cleanedName, _ := nameCleaner(name, true)
+	cleanedName, _ := nameCleaner(html.UnescapeString(name), true)
 	displayName := cleanedName
 
 	if len(regions) > 0 {

@@ -3,6 +3,7 @@ package cache
 import (
 	"encoding/json"
 	"grout/romm"
+	"html"
 
 	"grout/internal"
 )
@@ -37,6 +38,7 @@ func (cm *Manager) GetCollections() ([]romm.Collection, error) {
 			cm.stats.recordError()
 			return nil, newCacheError("get", "collections", "", err)
 		}
+		collection.Name = html.UnescapeString(collection.Name)
 		collections = append(collections, collection)
 	}
 
@@ -84,6 +86,7 @@ func (cm *Manager) GetCollectionsByType(collType string) ([]romm.Collection, err
 			cm.stats.recordError()
 			return nil, newCacheError("get", "collections", collType, err)
 		}
+		collection.Name = html.UnescapeString(collection.Name)
 		collections = append(collections, collection)
 	}
 

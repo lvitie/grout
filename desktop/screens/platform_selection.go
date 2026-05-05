@@ -27,15 +27,15 @@ type PlatformSelectionScreen struct {
 	statusText *atomic.String
 
 	// UI elements that need updating
-	stack              *adw.ViewStack
-	outerStack         *gtk.Stack
-	progressBar        *gtk.ProgressBar
-	listBox            *gtk.ListBox
-	platformListStack  *gtk.Stack
-	collectionsScreen  *CollectionsScreen
-	installedScreen    *InstalledScreen
-	collectionsBox     *gtk.ListBox
-	gamesBox           *gtk.ListBox
+	stack             *adw.ViewStack
+	outerStack        *gtk.Stack
+	progressBar       *gtk.ProgressBar
+	listBox           *gtk.ListBox
+	platformListStack *gtk.Stack
+	collectionsScreen *CollectionsScreen
+	installedScreen   *InstalledScreen
+	collectionsBox    *gtk.ListBox
+	gamesBox          *gtk.ListBox
 }
 
 func NewPlatformSelectionScreen(router *desktop.Router) *PlatformSelectionScreen {

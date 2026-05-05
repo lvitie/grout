@@ -6,6 +6,7 @@ import (
 	"errors"
 	"grout/internal"
 	"grout/romm"
+	"html"
 	"strconv"
 	"strings"
 	"unicode"
@@ -26,6 +27,11 @@ func normalizeForMatch(s string) string {
 		}
 	}
 	return strings.TrimSpace(b.String())
+}
+
+func unescapeGame(game *romm.Rom) {
+	game.Name = html.UnescapeString(game.Name)
+	game.Summary = html.UnescapeString(game.Summary)
 }
 
 type Type string
@@ -85,6 +91,7 @@ func (cm *Manager) GetPlatformGames(platformID int) ([]romm.Rom, error) {
 			cm.stats.recordError()
 			return nil, newCacheError("get", "games", GetPlatformCacheKey(platformID), err)
 		}
+		unescapeGame(&game)
 		games = append(games, game)
 	}
 
@@ -375,6 +382,7 @@ func (cm *Manager) GetCollectionGames(collection romm.Collection) ([]romm.Rom, e
 			cm.stats.recordError()
 			return nil, newCacheError("get", "games", GetCollectionCacheKey(collection), err)
 		}
+		unescapeGame(&game)
 		games = append(games, game)
 	}
 
@@ -631,6 +639,7 @@ func (cm *Manager) GetGamesByIDs(gameIDs []int) ([]romm.Rom, error) {
 			cm.stats.recordError()
 			return nil, newCacheError("get", "games", "batch", err)
 		}
+		unescapeGame(&game)
 		games = append(games, game)
 	}
 
@@ -878,6 +887,7 @@ func (cm *Manager) GetFilteredGames(filter GameFilter) ([]romm.Rom, error) {
 			cm.stats.recordError()
 			return nil, newCacheError("get", "games", "filtered", err)
 		}
+		unescapeGame(&game)
 		games = append(games, game)
 	}
 
@@ -1103,6 +1113,7 @@ func (cm *Manager) GetRomByFSLookup(fsSlug, fsNameNoExt string) (romm.Rom, error
 		cm.stats.recordError()
 		return romm.Rom{}, newCacheError("get", "games", "fs_lookup", err)
 	}
+	unescapeGame(&game)
 
 	cm.stats.recordHit()
 	return game, nil
@@ -1157,6 +1168,7 @@ func (cm *Manager) GetRomByNameLookup(fsSlug, name string) (romm.Rom, error) {
 		cm.stats.recordError()
 		return romm.Rom{}, newCacheError("get", "games", "name_lookup", err)
 	}
+	unescapeGame(&game)
 
 	cm.stats.recordHit()
 	return game, nil

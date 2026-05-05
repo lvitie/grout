@@ -8,11 +8,21 @@ import (
 	"grout/romm"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"time"
 )
 
 var kidModeEnabled atomic.Bool
+
+type SaveLayout string
+
+const (
+	SaveLayoutRomM      SaveLayout = "" // default, current behavior
+	SaveLayoutEmuDeck   SaveLayout = "emudeck"
+	SaveLayoutRetroDeck SaveLayout = "retrodeck"
+	SaveLayoutRetroArch SaveLayout = "retroarch"
+)
 
 type AdditionalDownloads struct {
 	Marquee   artutil.ArtKind `json:"marquee,omitempty"`
@@ -76,6 +86,10 @@ type Config struct {
 	SwapFaceButtons       bool              `json:"swap_face_buttons,omitempty"`
 	PlatformOrder         []string          `json:"platform_order,omitempty"`
 	SaveDirectoryMappings map[string]string `json:"save_directory_mappings,omitempty"`
+	SaveLayout            SaveLayout        `json:"save_layout,omitempty"`
+	SaveBasePath          string            `json:"save_base_path,omitempty"`
+	RomLayout             SaveLayout        `json:"rom_layout,omitempty"`
+	RomBasePath           string            `json:"rom_base_path,omitempty"`
 	SlotPreferences       map[string]string `json:"-"`                           // Stored in save_slots.json, not config.json
 	SaveBackupLimit       int               `json:"save_backup_limit,omitempty"` // 0 = no limit, 5/10/15 = keep N most recent per game
 
@@ -361,15 +375,12 @@ func (c Config) ResolveRommFSSlug(cfwKey string) string {
 }
 
 func (c Config) GetPlatformRomDirectory(pi romm.Platform) string {
-	rp := pi.FSSlug
 	if mapping, ok := c.DirectoryMappings[pi.FSSlug]; ok && mapping.RelativePath != "" {
-		rp = mapping.RelativePath
+		return filepath.Join(c.GetRomBasePath(), mapping.RelativePath)
 	}
 
-	// Join with base rom directory from platform
-	baseRomDir := platform.GetCurrent().RomDirectory()
-
-	return filepath.Join(baseRomDir, rp)
+	subfolder := mapFSSlugToLayout(pi.FSSlug, c.RomLayout)
+	return filepath.Join(c.GetRomBasePath(), subfolder)
 }
 
 func (c Config) GetArtDirectory(pi romm.Platform) string {
@@ -420,4 +431,199 @@ func (c Config) GetFanartDirectory(pi romm.Platform) string {
 func (c Config) GetBoxbackDirectory(pi romm.Platform) string {
 	romDir := c.GetPlatformRomDirectory(pi)
 	return platform.GetCurrent().GetBoxbackDirectory(romDir, pi.FSSlug, pi.Name)
+}
+
+// GetRomBasePath returns the base path for ROMs.
+func (c Config) GetRomBasePath() string {
+	if c.RomBasePath != "" {
+		expanded, err := expandTilde(c.RomBasePath)
+		if err == nil {
+			return expanded
+		}
+		return c.RomBasePath
+	}
+	return GetDefaultRomBasePath(c.RomLayout)
+}
+
+func GetDefaultRomBasePath(layout SaveLayout) string {
+	home, _ := os.UserHomeDir()
+
+	switch layout {
+	case SaveLayoutEmuDeck:
+		return filepath.Join(home, "Emulation", "roms")
+	case SaveLayoutRetroDeck:
+		return filepath.Join(home, ".var", "app", "net.retrodeck.retrodeck", "data", "roms")
+	case SaveLayoutRetroArch:
+		return filepath.Join(home, ".config", "retroarch", "roms")
+	default:
+		return platform.GetCurrent().RomDirectory()
+	}
+}
+
+// GetSaveBasePath returns the base path for saves.
+// If SaveBasePath is set, it's returned after expanding ~.
+// Otherwise, the default for the current layout is returned.
+func (c Config) GetSaveBasePath() string {
+	if c.SaveBasePath != "" {
+		expanded, err := expandTilde(c.SaveBasePath)
+		if err == nil {
+			return expanded
+		}
+		return c.SaveBasePath
+	}
+	return GetDefaultSaveBasePath(c.SaveLayout)
+}
+
+// GetDefaultSaveBasePath returns the conventional default base path for a given layout.
+func GetDefaultSaveBasePath(layout SaveLayout) string {
+	home, _ := os.UserHomeDir()
+
+	switch layout {
+	case SaveLayoutEmuDeck:
+		return filepath.Join(home, "Emulation", "saves")
+	case SaveLayoutRetroDeck:
+		return filepath.Join(home, ".var", "app", "net.retrodeck.retrodeck", "data", "saves")
+	case SaveLayoutRetroArch:
+		return filepath.Join(home, ".config", "retroarch", "saves")
+	default:
+		// RomM layout or empty: use platform default
+		return platform.GetCurrent().BaseSavePath()
+	}
+}
+
+// expandTilde expands ~ to the user's home directory.
+func expandTilde(path string) (string, error) {
+	if !strings.HasPrefix(path, "~") {
+		return path, nil
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	if path == "~" {
+		return home, nil
+	}
+	return filepath.Join(home, path[2:]), nil
+}
+
+// mapFSSlugToLayout maps a RomM fs_slug to the appropriate folder name for the given layout.
+// If the slug is not in the map, the slug itself is returned as the folder name.
+func mapFSSlugToLayout(fsSlug string, layout SaveLayout) string {
+	var folderMap map[string]string
+
+	switch layout {
+	case SaveLayoutEmuDeck:
+		folderMap = emuDeckFolderMap
+	case SaveLayoutRetroArch:
+		folderMap = retroArchFolderMap
+	case SaveLayoutRetroDeck:
+		folderMap = retroDeckFolderMap
+	default:
+		// RomM layout uses fsSlug directly
+		return fsSlug
+	}
+
+	if mapped, ok := folderMap[fsSlug]; ok {
+		return mapped
+	}
+	return fsSlug
+}
+
+// Folder name mappings for different layouts
+var emuDeckFolderMap = map[string]string{
+	"snes":       "snes",
+	"nes":        "nes",
+	"gba":        "gba",
+	"gbc":        "gbc",
+	"gb":         "gb",
+	"n64":        "n64",
+	"nds":        "nds",
+	"3ds":        "3ds",
+	"gc":         "gc",
+	"wii":        "wii",
+	"wiiu":       "wiiu",
+	"switch":     "switch",
+	"psx":        "psx",
+	"ps2":        "ps2",
+	"psp":        "psp",
+	"genesis":    "genesis",
+	"megadrive":  "genesis",
+	"sms":        "mastersystem",
+	"ms":         "mastersystem",
+	"gg":         "gamegear",
+	"saturn":     "saturn",
+	"dreamcast":  "dreamcast",
+	"dc":         "dreamcast",
+	"segacd":     "segacd",
+	"sega32x":    "sega32x",
+	"atari2600":  "atari2600",
+	"atari7800":  "atari7800",
+	"lynx":       "atarilynx",
+	"jaguar":     "atarijaguar",
+	"ngp":        "ngp",
+	"ngpc":       "ngpc",
+	"neogeo":     "neogeo",
+	"arcade":     "arcade",
+	"mame":       "mame",
+	"pcengine":   "pcengine",
+	"tg16":       "tg16",
+	"wonderswan": "wonderswan",
+	"wsc":        "wonderswancolor",
+}
+
+var retroArchFolderMap = map[string]string{
+	"snes":       "Nintendo - Super Nintendo Entertainment System",
+	"nes":        "Nintendo - Nintendo Entertainment System",
+	"gba":        "Nintendo - Game Boy Advance",
+	"gbc":        "Nintendo - Game Boy Color",
+	"gb":         "Nintendo - Game Boy",
+	"n64":        "Nintendo - Nintendo 64",
+	"nds":        "Nintendo - Nintendo DS",
+	"gc":         "Nintendo - GameCube",
+	"genesis":    "Sega - Mega Drive - Genesis",
+	"megadrive":  "Sega - Mega Drive - Genesis",
+	"sms":        "Sega - Master System - Mark III",
+	"ms":         "Sega - Master System - Mark III",
+	"gg":         "Sega - Game Gear",
+	"saturn":     "Sega - Saturn",
+	"dreamcast":  "Sega - Dreamcast",
+	"dc":         "Sega - Dreamcast",
+	"psx":        "Sony - PlayStation",
+	"ps2":        "Sony - PlayStation 2",
+	"psp":        "Sony - PlayStation Portable",
+	"atari2600":  "Atari - 2600",
+	"atari7800":  "Atari - 7800",
+	"lynx":       "Atari - Lynx",
+	"neogeo":     "SNK - Neo Geo",
+	"arcade":     "MAME",
+	"mame":       "MAME",
+	"pcengine":   "NEC - PC Engine - TurboGrafx 16",
+	"tg16":       "NEC - PC Engine - TurboGrafx 16",
+	"wonderswan": "Bandai - WonderSwan",
+	"wsc":        "Bandai - WonderSwan Color",
+	"ngp":        "SNK - Neo Geo Pocket",
+	"ngpc":       "SNK - Neo Geo Pocket Color",
+}
+
+// RetroDeck uses the same as RetroArch system folder names
+var retroDeckFolderMap = retroArchFolderMap
+
+// GetEffectiveSaveDirectory returns the effective save directory for a given fs_slug.
+// It considers SaveDirectoryMappings (per-platform override), then SaveLayout and SaveBasePath,
+// then falls back to the platform default.
+func (c Config) GetEffectiveSaveDirectory(fsSlug string) string {
+	// Check if there's an explicit mapping for this slug
+	if c.SaveDirectoryMappings != nil {
+		if mapped, ok := c.SaveDirectoryMappings[fsSlug]; ok && mapped != "" {
+			baseSavePath := platform.GetCurrent().BaseSavePath()
+			if baseSavePath != "" {
+				return filepath.Join(baseSavePath, mapped)
+			}
+		}
+	}
+
+	// Use the layout-based resolution
+	basePath := c.GetSaveBasePath()
+	subfolder := mapFSSlugToLayout(fsSlug, c.SaveLayout)
+	return filepath.Join(basePath, subfolder)
 }

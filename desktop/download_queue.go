@@ -28,12 +28,12 @@ type DownloadItem struct {
 }
 
 type DownloadQueue struct {
-	mu        sync.Mutex
-	items     []*DownloadItem
-	listeners []func()
+	mu         sync.Mutex
+	items      []*DownloadItem
+	listeners  []func()
 	processing bool
-	host      *romm.Host
-	config    *internal.Config
+	host       *romm.Host
+	config     *internal.Config
 }
 
 var (

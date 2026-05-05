@@ -55,6 +55,24 @@ func (s *SettingsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	moreGroup.SetTitle("More")
 	page.Add(moreGroup)
 
+	romPathRow := adw.NewActionRow()
+	romPathRow.SetTitle("ROM Path")
+	romPathRow.SetSubtitle("Configure where ROMs are downloaded and folder structure")
+	romPathRow.SetActivatable(true)
+	romPathRow.ConnectActivated(func() {
+		router.Navigate(NewRomPathSettingsScreen(router))
+	})
+	moreGroup.Add(romPathRow)
+
+	savePathRow := adw.NewActionRow()
+	savePathRow.SetTitle("Save Path")
+	savePathRow.SetSubtitle("Configure save file storage location and folder structure")
+	savePathRow.SetActivatable(true)
+	savePathRow.ConnectActivated(func() {
+		router.Navigate(NewSavePathSettingsScreen(router))
+	})
+	moreGroup.Add(savePathRow)
+
 	saveSyncRow := adw.NewActionRow()
 	saveSyncRow.SetTitle("Save Sync")
 	saveSyncRow.SetSubtitle("Synchronize game saves with RomM")

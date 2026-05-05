@@ -5,6 +5,7 @@ import (
 	"grout/internal"
 	"grout/internal/artutil"
 	"grout/romm"
+	"html"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -86,7 +87,7 @@ func (s *GameDetailsScreen) Build(router *desktop.Router) gtk.Widgetter {
 		}
 	}
 
-	desc := gtk.NewLabel(s.game.Summary)
+	desc := gtk.NewLabel(html.UnescapeString(s.game.Summary))
 	desc.SetWrap(true)
 	desc.SetMaxWidthChars(60)
 	box.Append(desc)

@@ -923,19 +923,10 @@ func extractPSPGameID(dirName string) string {
 }
 
 func ResolveSaveDirectory(fsSlug string, config *internal.Config) string {
-	if config != nil && config.SaveDirectoryMappings != nil {
-		if mapped, ok := config.SaveDirectoryMappings[fsSlug]; ok && mapped != "" {
-			baseSavePath := platform.GetCurrent().BaseSavePath()
-			if baseSavePath != "" {
-				return filepath.Join(baseSavePath, mapped)
-			}
-		}
+	if config != nil {
+		return config.GetEffectiveSaveDirectory(fsSlug)
 	}
 
 	effectiveFSSlug := fsSlug
-	if config != nil {
-		effectiveFSSlug = config.ResolveFSSlug(fsSlug)
-	}
-
 	return platform.GetCurrent().GetSaveDirectory(effectiveFSSlug)
 }
