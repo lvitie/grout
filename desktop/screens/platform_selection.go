@@ -226,13 +226,8 @@ func (s *PlatformSelectionScreen) refreshPlatformList() {
 		logger.Error("Failed to load platforms from cache", "error", err)
 	}
 
-	// If the list is empty, don't filter out 0-game platforms (helps debugging/initial sync)
-	s.platforms = make([]romm.Platform, 0)
-	for _, p := range allPlatforms {
-		if p.ROMCount > 0 || len(allPlatforms) < 10 { // Show all if we have very few, or if they have games
-			s.platforms = append(s.platforms, p)
-		}
-	}
+	// Show all platforms from the database
+	s.platforms = allPlatforms
 	
 	logger.Info("Refreshing platform list", 
 		"visible_platforms", len(s.platforms), 
