@@ -199,7 +199,7 @@ func (s *CollectionsScreen) SetSearchQuery(searchBar *gtk.SearchEntry) {
 		if ar, ok := row.Child().(*adw.ActionRow); ok {
 			return strings.Contains(strings.ToLower(ar.Title()), text)
 		}
-		return true
+		return false
 	})
 
 	if s.flowBox != nil {
@@ -211,7 +211,7 @@ func (s *CollectionsScreen) SetSearchQuery(searchBar *gtk.SearchEntry) {
 			if cell, ok := child.Child().(*widgets.CollectionGridCell); ok {
 				return strings.Contains(strings.ToLower(cell.GetCollection().Name), text)
 			}
-			return true
+			return false
 		})
 	}
 }
