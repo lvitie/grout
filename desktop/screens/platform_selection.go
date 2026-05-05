@@ -204,6 +204,9 @@ func (s *PlatformSelectionScreen) buildListView(router *desktop.Router) gtk.Widg
 		cell.Append(label)
 
 		flowBox.Append(cell)
+
+		// Load actual platform icon asynchronously
+		loadPlatformIconAsync(p, img)
 	}
 
 	flowBox.ConnectChildActivated(func(child *gtk.FlowBoxChild) {
@@ -697,5 +700,43 @@ func (s *PlatformSelectionScreen) startSync(router *desktop.Router) {
 
 		s.progress.Store(1.0)
 		s.statusText.Store("Sync complete!")
+	}()
+}
+
+func loadPlatformIconAsync(p romm.Platform, img *gtk.Image) {
+	go func() {
+		candidates := resources.GetPlatformIconCandidates(p.Slug, p.ShortName, p.Name)
+		if len(candidates) == 0 {
+			return
+		}
+
+		for _, c := range candidates {
+			loader, err := gdkpixbuf.NewPixbufLoaderWithMIMEType(c.Mime)
+			if err != nil {
+				loader = gdkpixbuf.NewPixbufLoader()
+			}
+
+			if err := loader.Write(c.Data); err != nil {
+				loader.Close()
+				continue
+			}
+
+			if err := loader.Close(); err != nil {
+				continue
+			}
+
+			pixbuf := loader.Pixbuf()
+			if pixbuf == nil {
+				continue
+			}
+
+			scaled := pixbuf.ScaleSimple(128, 128, gdkpixbuf.InterpBilinear)
+			if scaled != nil {
+				glib.IdleAdd(func() {
+					img.SetFromPixbuf(scaled)
+				})
+				return
+			}
+		}
 	}()
 }
