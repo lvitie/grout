@@ -196,10 +196,12 @@ func (s *CollectionsScreen) SetSearchQuery(searchBar *gtk.SearchEntry) {
 		if text == "" {
 			return true
 		}
-		if ar, ok := row.Child().(*adw.ActionRow); ok {
-			return strings.Contains(strings.ToLower(ar.Title()), text)
+		idx := row.Index()
+		if idx >= 0 && idx < len(s.collections) {
+			name := strings.ToLower(s.collections[idx].Name)
+			return strings.Contains(name, text)
 		}
-		return false
+		return true
 	})
 
 	if s.flowBox != nil {
@@ -208,8 +210,10 @@ func (s *CollectionsScreen) SetSearchQuery(searchBar *gtk.SearchEntry) {
 			if text == "" {
 				return true
 			}
-			if cell, ok := child.Child().(*widgets.CollectionGridCell); ok {
-				return strings.Contains(strings.ToLower(cell.GetCollection().Name), text)
+			idx := child.Index()
+			if idx >= 0 && idx < len(s.collections) {
+				name := strings.ToLower(s.collections[idx].Name)
+				return strings.Contains(name, text)
 			}
 			return false
 		})

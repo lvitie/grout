@@ -64,11 +64,10 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 		if text == "" {
 			return true
 		}
-
-		if actionRow, ok := row.Child().(*adw.ActionRow); ok {
-			title := strings.ToLower(actionRow.Title())
-			subtitle := strings.ToLower(actionRow.Subtitle())
-			return strings.Contains(title, text) || strings.Contains(subtitle, text)
+		idx := row.Index()
+		if idx >= 0 && idx < len(s.games) {
+			name := strings.ToLower(s.games[idx].Name)
+			return strings.Contains(name, text)
 		}
 		return true
 	})
@@ -113,10 +112,10 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 		if text == "" {
 			return true
 		}
-
-		if cell, ok := child.Child().(*widgets.GameGridCell); ok {
-			gameName := strings.ToLower(cell.GetGame().Name)
-			return strings.Contains(gameName, text)
+		idx := child.Index()
+		if idx >= 0 && idx < len(gridGames) {
+			name := strings.ToLower(gridGames[idx].Name)
+			return strings.Contains(name, text)
 		}
 		return false
 	})
