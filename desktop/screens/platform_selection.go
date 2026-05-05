@@ -73,8 +73,80 @@ func (s *PlatformSelectionScreen) Build(router *desktop.Router) gtk.Widgetter {
 	switcherTitle.SetStack(s.stack)
 	switcherTitle.SetTitle("Grout")
 
+	// Search bar
+	searchBar := gtk.NewSearchEntry()
+	searchBar.SetPlaceholderText("Search...")
+
+	// Wire search to filter platforms list
+	s.listBox.SetFilterFunc(func(row *gtk.ListBoxRow) bool {
+		text := strings.ToLower(searchBar.Text())
+		if text == "" {
+			return true
+		}
+
+		if actionRow, ok := row.Child().(*adw.ActionRow); ok {
+			title := strings.ToLower(actionRow.Title())
+			subtitle := strings.ToLower(actionRow.Subtitle())
+			return strings.Contains(title, text) || strings.Contains(subtitle, text)
+		}
+		return true
+	})
+
+	searchBar.ConnectChanged(func() {
+		s.listBox.InvalidateFilter()
+		if s.collectionsScreen != nil && s.collectionsScreen.ListBox != nil {
+			s.collectionsScreen.ListBox.InvalidateFilter()
+		}
+	})
+
+	// Wire search to filter collections list
+	if s.collectionsScreen != nil && s.collectionsScreen.ListBox != nil {
+		s.collectionsScreen.ListBox.SetFilterFunc(func(row *gtk.ListBoxRow) bool {
+			text := strings.ToLower(searchBar.Text())
+			if text == "" {
+				return true
+			}
+
+			if actionRow, ok := row.Child().(*adw.ActionRow); ok {
+				title := strings.ToLower(actionRow.Title())
+				subtitle := strings.ToLower(actionRow.Subtitle())
+				return strings.Contains(title, text) || strings.Contains(subtitle, text)
+			}
+			return true
+		})
+	}
+
+	// Toggle view button
+	isGridView := router.State().GetViewMode() == desktop.ViewModeGrid
+	iconName := "view-grid-symbolic"
+	if isGridView {
+		iconName = "view-list-symbolic"
+	}
+
+	toggleBtn := gtk.NewButtonFromIconName(iconName)
+	toggleBtn.SetTooltipText("Toggle grid/list view")
+
+	toggleBtn.ConnectClicked(func() {
+		isGridView = !isGridView
+		if isGridView {
+			router.State().SetViewMode(desktop.ViewModeGrid)
+			toggleBtn.SetIconName("view-list-symbolic")
+		} else {
+			router.State().SetViewMode(desktop.ViewModeList)
+			toggleBtn.SetIconName("view-grid-symbolic")
+		}
+	})
+
+	headerBox := gtk.NewBox(gtk.OrientationHorizontal, 6)
+	headerBox.SetMarginStart(6)
+	headerBox.SetMarginEnd(6)
+	headerBox.Append(searchBar)
+	headerBox.SetHExpand(true)
+	headerBox.Append(toggleBtn)
+
 	header := adw.NewHeaderBar()
 	header.SetTitleWidget(switcherTitle)
+	header.PackStart(headerBox)
 
 	syncBtn := gtk.NewButtonFromIconName("view-refresh-symbolic")
 	syncBtn.ConnectClicked(func() {

@@ -14,7 +14,7 @@ import (
 type CollectionsScreen struct {
 	router      *desktop.Router
 	collections []romm.Collection
-	listBox     *gtk.ListBox
+	ListBox     *gtk.ListBox
 	stack       *gtk.Stack
 }
 
@@ -39,11 +39,11 @@ func (s *CollectionsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	s.stack.AddNamed(statusPage, "empty")
 
 	// List View
-	s.listBox = gtk.NewListBox()
-	s.listBox.SetSelectionMode(gtk.SelectionSingle)
-	s.listBox.AddCSSClass("navigation-sidebar")
+	s.ListBox = gtk.NewListBox()
+	s.ListBox.SetSelectionMode(gtk.SelectionSingle)
+	s.ListBox.AddCSSClass("navigation-sidebar")
 
-	s.listBox.ConnectRowActivated(func(row *gtk.ListBoxRow) {
+	s.ListBox.ConnectRowActivated(func(row *gtk.ListBoxRow) {
 		idx := row.Index()
 		if idx >= 0 && idx < len(s.collections) {
 			router.Navigate(NewCollectionGameListScreen(router, s.collections[idx]))
@@ -51,7 +51,7 @@ func (s *CollectionsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	})
 
 	scrolled := gtk.NewScrolledWindow()
-	scrolled.SetChild(s.listBox)
+	scrolled.SetChild(s.ListBox)
 	scrolled.SetVExpand(true)
 	s.stack.AddNamed(scrolled, "list")
 
@@ -84,11 +84,11 @@ func (s *CollectionsScreen) Refresh() {
 
 	// Clear list
 	for {
-		child := s.listBox.FirstChild()
+		child := s.ListBox.FirstChild()
 		if child == nil {
 			break
 		}
-		s.listBox.Remove(child)
+		s.ListBox.Remove(child)
 	}
 
 	// Add rows
@@ -104,6 +104,6 @@ func (s *CollectionsScreen) Refresh() {
 		}
 		row.SetSubtitle(desktop.EscapeMarkup(subtitle))
 		row.SetActivatable(true)
-		s.listBox.Append(row)
+		s.ListBox.Append(row)
 	}
 }
