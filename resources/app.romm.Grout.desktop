@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Grout
+Comment=A modern RomM client for Linux desktop and Steam Deck
+Exec=grout-desktop
+Icon=app.romm.Grout
+Terminal=false
+Categories=Game;
+Keywords=RomM;ROM;Emulator;Sync;
+StartupWMClass=grout-desktop

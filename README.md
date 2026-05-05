@@ -6,10 +6,10 @@
   <br />
   <img src=".github/resources/logotipo.png" height="45px" width="auto" alt="romm grout logotype">
     <h3 style="font-size: 25px;">
-      A RomM Client for your retro doo-dad.
+      A modern RomM client for Linux Desktop and Steam Deck.
     </h3>
 
-[Allium][allium] · [Batocera][batocera] · [Knulli][knulli] · [Koriki][koriki] · [MinUI][minui] · [muOS][muos] · [NextUI][nextui] · [Onion][onion] · [ROCKNIX][rocknix] · [Spruce][spruce] · [SprigUI][sprigui] · [TwigUI][twigui] · [TrimUI][trimui]
+Linux Desktop · Steam Deck · Flatpak
 
 <br>
 
@@ -83,22 +83,6 @@ A significant amount of time has been spent building Grout.
 If you enjoy using Grout and feel inclined to pay it forward, go do something nice for someone! ❤️
 
 ✌🏻
-
-<!-- CFW Links -->
-
-[allium]: https://github.com/goweiwen/Allium
-[batocera]: https://batocera.org
-[knulli]: https://knulli.org
-[koriki]: https://github.com/Rparadise-Team/Koriki
-[minui]: https://github.com/shauninman/MinUI
-[muos]: https://muos.dev
-[nextui]: https://nextui.loveretro.games
-[onion]: https://onionui.github.io
-[rocknix]: https://rocknix.org
-[spruce]: https://spruceui.github.io/
-[sprigui]: https://github.com/spruceUI/sprigUI
-[twigui]: https://github.com/spruceUI/twigUI
-[trimui]: https://github.com/trimui
 
 <!-- Badges -->
 

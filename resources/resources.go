@@ -7,7 +7,7 @@ import (
 	"grout/internal/i18n"
 )
 
-//go:embed locales/*.toml splash.png
+//go:embed locales/*.toml splash.png app.romm.Grout.png
 var embeddedFiles embed.FS
 
 type LocaleFile struct {
@@ -48,6 +48,14 @@ func GetSplashImageBytes() ([]byte, error) {
 	data, err := embeddedFiles.ReadFile("splash.png")
 	if err != nil {
 		return nil, fmt.Errorf("failed to read embedded splash image: %w", err)
+	}
+	return data, nil
+}
+
+func GetAppIconBytes() ([]byte, error) {
+	data, err := embeddedFiles.ReadFile("app.romm.Grout.png")
+	if err != nil {
+		return nil, fmt.Errorf("failed to read embedded app icon: %w", err)
 	}
 	return data, nil
 }

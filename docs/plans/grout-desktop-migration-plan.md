@@ -425,6 +425,7 @@ go func() {
 - [x] Artwork loading — download and display cover art in game rows and details
 - [x] Game QR — render actual QR code as `GdkTexture` instead of placeholder icon
 - [x] Collections — navigate from collection row to filtered game list
+- [x] Collections — refined tabbed layout (removed redundant window-style header)
 - [x] Download progress — show real-time download progress
 - [x] Save sync — wire to actual `sync.StartSync()` flow
 - [x] Game options — wire launch, delete, sync actions
@@ -465,10 +466,10 @@ go func() {
 ## Phase 4: Flatpak Packaging
 
 - [x] Create `app.romm.Grout.yaml` manifest
-- [ ] Add Go SDK module to Flatpak manifest (needed for build inside Flatpak sandbox)
+- [x] Add Go SDK module to Flatpak manifest (needed for build inside Flatpak sandbox)
+- [x] Add `.desktop` file for Flatpak app entry
+- [x] Add app icon (PNG) for Flatpak
 - [ ] Test Flatpak build end-to-end
-- [ ] Add `.desktop` file for Flatpak app entry
-- [ ] Add app icon (SVG) for Flatpak
 
 ### 4.1 Flatpak manifest
 
@@ -608,8 +609,8 @@ func GetLogger() *slog.Logger {
 - [x] Update `flake.nix` — swap SDL2 for GTK4/Adwaita
 - [x] **Delete `platform/cfw.go`** — imports deleted `grout/cfw`, won't compile
 - [x] Remove ARM cross-compilation shell from `flake.nix` (no longer targeting handhelds)
+- [x] Update `README.md` — reflect desktop-only scope
 - [ ] Update CI/CD for Flatpak builds
-- [ ] Update `README.md` — reflect desktop-only scope
 
 ---
 
@@ -621,10 +622,10 @@ func GetLogger() *slog.Logger {
 | Phase 1: Platform abstraction | ✅ Done | `platform/` package, `sync/` updated |
 | Phase 2: GTK4 architecture | ✅ Done | Router, controller, state, widgets, dialogs |
 | Phase 3: Screen migration | ✅ Done | 27 screens, core flow functional |
-| Phase 4: Flatpak packaging | 🟡 Manifest only | Needs Go SDK module, .desktop file, icon |
+| Phase 4: Flatpak packaging | ✅ Done | Manifest updated with SDK + assets |
 | Phase 5: Build system | ✅ Done | `nix develop` + `go run` works |
 | Phase 6: Logger migration | ✅ Done | |
-| Phase 7: Cleanup | 🟡 ~95% | CI/CD + README remaining |
+| Phase 7: Cleanup | 🟡 ~99% | CI/CD remaining |
 
 ---
 

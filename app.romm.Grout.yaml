@@ -15,11 +15,21 @@ finish-args:
   - --filesystem=xdg-cache/grout:create   # Cache/DB
   - --filesystem=xdg-config/grout:create  # Config
 
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.golang
+
+build-options:
+  append-path: /usr/lib/sdk/golang/bin
+  env:
+    GOPATH: /run/build/grout/.go
+
 modules:
   - name: grout
     buildsystem: simple
     build-commands:
       - go build -o /app/bin/grout-desktop ./cmd/grout-desktop
+      - install -Dm644 resources/app.romm.Grout.desktop /app/share/applications/app.romm.Grout.desktop
+      - install -Dm644 resources/app.romm.Grout.png /app/share/icons/hicolor/512x512/apps/app.romm.Grout.png
     sources:
       - type: dir
         path: .

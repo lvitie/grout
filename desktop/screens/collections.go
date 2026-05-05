@@ -57,15 +57,7 @@ func (s *CollectionsScreen) Build(router *desktop.Router) gtk.Widgetter {
 
 	s.Refresh()
 
-	header := adw.NewHeaderBar()
-	header.SetTitleWidget(adw.NewWindowTitle("Collections", ""))
-
-	box := gtk.NewBox(gtk.OrientationVertical, 0)
-	box.Append(header)
-	box.Append(s.stack)
-
-	page := adw.NewNavigationPage(box, "Collections")
-	return page
+	return s.stack
 }
 
 func (s *CollectionsScreen) Refresh() {
