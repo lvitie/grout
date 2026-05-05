@@ -99,6 +99,8 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 	flowBox.SetMarginTop(12)
 	flowBox.SetMarginBottom(12)
 	flowBox.SetHomogeneous(false)
+	flowBox.SetVExpand(false)
+	flowBox.SetHExpand(true)
 
 	gridGames := s.games // Keep reference for click handling
 	for _, g := range gridGames {
@@ -129,8 +131,14 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 		}
 	})
 
+	// Wrap FlowBox in a box to prevent vertical expansion
+	flowBoxWrapper := gtk.NewBox(gtk.OrientationVertical, 0)
+	flowBoxWrapper.SetVExpand(false)
+	flowBoxWrapper.SetHExpand(true)
+	flowBoxWrapper.Append(flowBox)
+
 	gridScrolled := gtk.NewScrolledWindow()
-	gridScrolled.SetChild(flowBox)
+	gridScrolled.SetChild(flowBoxWrapper)
 	gridScrolled.SetVExpand(true)
 	gridScrolled.SetHExpand(true)
 
