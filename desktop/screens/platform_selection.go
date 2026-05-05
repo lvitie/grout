@@ -23,7 +23,7 @@ type PlatformSelectionScreen struct {
 	statusText *atomic.String
 	
 	// UI elements that need updating
-	stack       *gtk.Stack
+	stack       *adw.ViewStack
 	progressBar *gtk.ProgressBar
 	listBox     *gtk.ListBox
 }
@@ -42,12 +42,15 @@ func NewPlatformSelectionScreen(router *desktop.Router) *PlatformSelectionScreen
 }
 
 func (s *PlatformSelectionScreen) Build(router *desktop.Router) gtk.Widgetter {
-	s.stack = gtk.NewStack()
-	s.stack.SetTransitionType(gtk.StackTransitionTypeSlideLeftRight)
+	s.stack = adw.NewViewStack()
 
 	// Platform List View
 	listView := s.buildListView(router)
-	s.stack.AddNamed(listView, "list")
+	s.stack.AddTitled(listView, "platforms", "Platforms")
+
+	// Collections View
+	collectionsView := NewCollectionsScreen(router).Build(router)
+	s.stack.AddTitled(collectionsView, "collections", "Collections")
 
 	// Sync View
 	syncView := s.buildSyncView(router)
@@ -56,10 +59,35 @@ func (s *PlatformSelectionScreen) Build(router *desktop.Router) gtk.Widgetter {
 	if len(s.platforms) == 0 || s.syncing.Load() {
 		s.stack.SetVisibleChildName("sync")
 	} else {
-		s.stack.SetVisibleChildName("list")
+		s.stack.SetVisibleChildName("platforms")
 	}
 
-	page := adw.NewNavigationPage(s.stack, "Grout")
+	// View Switcher Title
+	switcherTitle := adw.NewViewSwitcherTitle()
+	switcherTitle.SetStack(s.stack)
+	switcherTitle.SetTitle("Grout")
+
+	header := adw.NewHeaderBar()
+	header.SetTitleWidget(switcherTitle)
+
+	syncBtn := gtk.NewButtonFromIconName("view-refresh-symbolic")
+	syncBtn.ConnectClicked(func() {
+		s.stack.SetVisibleChildName("sync")
+		s.startSync(router)
+	})
+	header.PackEnd(syncBtn)
+
+	settingsBtn := gtk.NewButtonFromIconName("emblem-system-symbolic")
+	settingsBtn.ConnectClicked(func() {
+		router.Navigate(NewSettingsScreen(router))
+	})
+	header.PackEnd(settingsBtn)
+
+	box := gtk.NewBox(gtk.OrientationVertical, 0)
+	box.Append(header)
+	box.Append(s.stack)
+
+	page := adw.NewNavigationPage(box, "Grout")
 	return page
 }
 
@@ -72,14 +100,8 @@ func (s *PlatformSelectionScreen) buildListView(router *desktop.Router) gtk.Widg
 
 	s.listBox.ConnectRowActivated(func(row *gtk.ListBoxRow) {
 		idx := row.Index()
-		if idx == 0 {
-			router.Navigate(NewCollectionsScreen(router))
-			return
-		}
-
-		platformIdx := idx - 1
-		if platformIdx >= 0 && platformIdx < len(s.platforms) {
-			router.Navigate(NewGameListScreen(router, s.platforms[platformIdx]))
+		if idx >= 0 && idx < len(s.platforms) {
+			router.Navigate(NewGameListScreen(router, s.platforms[idx]))
 		}
 	})
 
@@ -88,36 +110,10 @@ func (s *PlatformSelectionScreen) buildListView(router *desktop.Router) gtk.Widg
 	scrolled.SetVExpand(true)
 	scrolled.SetHExpand(true)
 
-	header := adw.NewHeaderBar()
-	header.SetTitleWidget(adw.NewWindowTitle("Grout", ""))
-
-	syncBtn := gtk.NewButtonFromIconName("view-refresh-symbolic")
-	syncBtn.SetTooltipText("Sync Library")
-	syncBtn.ConnectClicked(func() {
-		s.stack.SetVisibleChildName("sync")
-		s.startSync(router)
-	})
-	header.PackEnd(syncBtn)
-
-	collectionsBtn := gtk.NewButtonFromIconName("folder-saved-search-symbolic")
-	collectionsBtn.SetTooltipText("Collections")
-	collectionsBtn.ConnectClicked(func() {
-		router.Navigate(NewCollectionsScreen(router))
-	})
-	header.PackEnd(collectionsBtn)
-
-	settingsBtn := gtk.NewButtonFromIconName("emblem-system-symbolic")
-	settingsBtn.SetTooltipText("Settings")
-	settingsBtn.ConnectClicked(func() {
-		router.Navigate(NewSettingsScreen(router))
-	})
-	header.PackEnd(settingsBtn)
-
 	s.progressBar = gtk.NewProgressBar()
 	s.progressBar.SetVisible(false)
 
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
-	box.Append(header)
 	box.Append(s.progressBar)
 	box.Append(scrolled)
 
@@ -245,14 +241,6 @@ func (s *PlatformSelectionScreen) refreshPlatformList() {
 		}
 		s.listBox.Remove(row)
 	}
-
-	// Add Collections row at the top
-	collRow := adw.NewActionRow()
-	collRow.SetTitle("Collections")
-	collRow.SetSubtitle("All custom and smart collections")
-	collRow.SetActivatable(true)
-	collRow.AddPrefix(gtk.NewImageFromIconName("folder-saved-search-symbolic"))
-	s.listBox.Append(collRow)
 
 	// Add Platform rows
 	for _, p := range s.platforms {

@@ -63,6 +63,15 @@ func (s *SettingsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	})
 	appearanceGroup.Add(showBoxArtRow)
 
+	collectionsRow := adw.NewActionRow()
+	collectionsRow.SetTitle("Collections")
+	collectionsRow.SetSubtitle("Configure regular, smart, and virtual collections visibility")
+	collectionsRow.SetActivatable(true)
+	collectionsRow.ConnectActivated(func() {
+		router.Navigate(NewCollectionsSettingsScreen(router))
+	})
+	appearanceGroup.Add(collectionsRow)
+
 	// More Group
 	moreGroup := adw.NewPreferencesGroup()
 	moreGroup.SetTitle("More")

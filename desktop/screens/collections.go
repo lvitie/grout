@@ -25,6 +25,23 @@ func NewCollectionsScreen(router *desktop.Router) *CollectionsScreen {
 }
 
 func (s *CollectionsScreen) Build(router *desktop.Router) gtk.Widgetter {
+	if len(s.collections) == 0 {
+		statusPage := adw.NewStatusPage()
+		statusPage.SetTitle("No Collections Found")
+		statusPage.SetDescription("Make sure collections are enabled in Settings and perform a full library sync.")
+		statusPage.SetIconName("folder-saved-search-symbolic")
+
+		header := adw.NewHeaderBar()
+		header.SetTitleWidget(adw.NewWindowTitle("Collections", ""))
+
+		box := gtk.NewBox(gtk.OrientationVertical, 0)
+		box.Append(header)
+		box.Append(statusPage)
+
+		page := adw.NewNavigationPage(box, "Collections")
+		return page
+	}
+
 	listBox := gtk.NewListBox()
 	listBox.SetSelectionMode(gtk.SelectionSingle)
 	listBox.AddCSSClass("navigation-sidebar")
