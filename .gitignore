@@ -21,6 +21,7 @@ result
 vendor/
 es_restart_request
 /save-sync-preview
+grout-desktop
 
 # Local config
 .env
