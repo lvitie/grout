@@ -60,13 +60,13 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 	}
 
 	listBox.SetFilterFunc(func(row *gtk.ListBoxRow) bool {
-		text := strings.ToLower(searchBar.Text())
+		text := desktop.NormalizeSearch(searchBar.Text())
 		if text == "" {
 			return true
 		}
 		idx := row.Index()
 		if idx >= 0 && idx < len(s.games) {
-			name := strings.ToLower(s.games[idx].Name)
+			name := desktop.NormalizeSearch(s.games[idx].Name)
 			return strings.Contains(name, text)
 		}
 		return true
@@ -108,13 +108,13 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 	}
 
 	flowBox.SetFilterFunc(func(child *gtk.FlowBoxChild) bool {
-		text := strings.ToLower(searchBar.Text())
+		text := desktop.NormalizeSearch(searchBar.Text())
 		if text == "" {
 			return true
 		}
 		idx := child.Index()
 		if idx >= 0 && idx < len(gridGames) {
-			name := strings.ToLower(gridGames[idx].Name)
+			name := desktop.NormalizeSearch(gridGames[idx].Name)
 			return strings.Contains(name, text)
 		}
 		return false

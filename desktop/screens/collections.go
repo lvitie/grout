@@ -192,13 +192,13 @@ func (s *CollectionsScreen) ShowListView() {
 
 func (s *CollectionsScreen) SetSearchQuery(searchBar *gtk.SearchEntry) {
 	s.listBox.SetFilterFunc(func(row *gtk.ListBoxRow) bool {
-		text := strings.ToLower(searchBar.Text())
+		text := desktop.NormalizeSearch(searchBar.Text())
 		if text == "" {
 			return true
 		}
 		idx := row.Index()
 		if idx >= 0 && idx < len(s.collections) {
-			name := strings.ToLower(s.collections[idx].Name)
+			name := desktop.NormalizeSearch(s.collections[idx].Name)
 			return strings.Contains(name, text)
 		}
 		return true
@@ -206,13 +206,13 @@ func (s *CollectionsScreen) SetSearchQuery(searchBar *gtk.SearchEntry) {
 
 	if s.flowBox != nil {
 		s.flowBox.SetFilterFunc(func(child *gtk.FlowBoxChild) bool {
-			text := strings.ToLower(searchBar.Text())
+			text := desktop.NormalizeSearch(searchBar.Text())
 			if text == "" {
 				return true
 			}
 			idx := child.Index()
 			if idx >= 0 && idx < len(s.collections) {
-				name := strings.ToLower(s.collections[idx].Name)
+				name := desktop.NormalizeSearch(s.collections[idx].Name)
 				return strings.Contains(name, text)
 			}
 			return false

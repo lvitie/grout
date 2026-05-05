@@ -806,13 +806,13 @@ func (s *PlatformSelectionScreen) buildSearchPanel(router *desktop.Router) gtk.W
 
 func (s *PlatformSelectionScreen) runGlobalSearch(query string, router *desktop.Router) {
 	cm := cache.GetCacheManager()
-	lq := strings.ToLower(query)
+	lq := desktop.NormalizeSearch(query)
 
 	// Collections: filter in Go
 	allCollections, _ := cm.GetCollections()
 	var matchedCollections []romm.Collection
 	for _, c := range allCollections {
-		if strings.Contains(strings.ToLower(c.Name), lq) {
+		if strings.Contains(desktop.NormalizeSearch(c.Name), lq) {
 			matchedCollections = append(matchedCollections, c)
 			if len(matchedCollections) >= 20 {
 				break
@@ -820,8 +820,17 @@ func (s *PlatformSelectionScreen) runGlobalSearch(query string, router *desktop.
 		}
 	}
 
-	// Games: SQL LIKE search across all platforms
-	games, _ := cm.GetFilteredGames(cache.GameFilter{NameSearch: query, Limit: 50})
+	// Games: fetch all and filter in Go for accent-insensitive matching
+	allGames, _ := cm.GetFilteredGames(cache.GameFilter{})
+	var games []romm.Rom
+	for _, g := range allGames {
+		if strings.Contains(desktop.NormalizeSearch(g.Name), lq) {
+			games = append(games, g)
+			if len(games) >= 50 {
+				break
+			}
+		}
+	}
 
 	glib.IdleAdd(func() {
 		// Clear collections box
