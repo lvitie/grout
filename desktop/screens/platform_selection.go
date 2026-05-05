@@ -72,8 +72,14 @@ func (s *PlatformSelectionScreen) buildListView(router *desktop.Router) gtk.Widg
 
 	s.listBox.ConnectRowActivated(func(row *gtk.ListBoxRow) {
 		idx := row.Index()
-		if idx >= 0 && idx < len(s.platforms) {
-			router.Navigate(NewGameListScreen(router, s.platforms[idx]))
+		if idx == 0 {
+			router.Navigate(NewCollectionsScreen(router))
+			return
+		}
+
+		platformIdx := idx - 1
+		if platformIdx >= 0 && platformIdx < len(s.platforms) {
+			router.Navigate(NewGameListScreen(router, s.platforms[platformIdx]))
 		}
 	})
 
@@ -240,7 +246,15 @@ func (s *PlatformSelectionScreen) refreshPlatformList() {
 		s.listBox.Remove(row)
 	}
 
-	// Add rows
+	// Add Collections row at the top
+	collRow := adw.NewActionRow()
+	collRow.SetTitle("Collections")
+	collRow.SetSubtitle("All custom and smart collections")
+	collRow.SetActivatable(true)
+	collRow.AddPrefix(gtk.NewImageFromIconName("folder-saved-search-symbolic"))
+	s.listBox.Append(collRow)
+
+	// Add Platform rows
 	for _, p := range s.platforms {
 		row := adw.NewActionRow()
 		row.SetTitle(desktop.EscapeMarkup(p.Name))
