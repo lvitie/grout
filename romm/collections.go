@@ -125,3 +125,25 @@ func (vc VirtualCollection) ToCollection() Collection {
 		UpdatedAt:       vc.UpdatedAt,
 	}
 }
+
+// GetCoverSmallURL returns the full URL for the small cover image.
+// Falls back to the first entry in PathCoversSmall if PathCoverSmall is empty,
+// then to URLCover, then returns empty string.
+func (c *Collection) GetCoverSmallURL(host Host) string {
+	path := c.PathCoverSmall
+	if path == "" && len(c.PathCoversSmall) > 0 {
+		path = c.PathCoversSmall[0]
+	}
+	return resolveAssetURL(host, path, c.URLCover)
+}
+
+// GetCoverLargeURL returns the full URL for the large cover image.
+// Falls back to the first entry in PathCoversLarge if PathCoverLarge is empty,
+// then to URLCover, then returns empty string.
+func (c *Collection) GetCoverLargeURL(host Host) string {
+	path := c.PathCoverLarge
+	if path == "" && len(c.PathCoversLarge) > 0 {
+		path = c.PathCoversLarge[0]
+	}
+	return resolveAssetURL(host, path, c.URLCover)
+}
