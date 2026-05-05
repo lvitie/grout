@@ -151,11 +151,11 @@ func (s *CollectionsScreen) Refresh() {
 
 		// Determine icon based on collection type
 		if c.IsVirtual {
-			iconImg.SetFromIconName("folder-remote-symbolic")
+			iconImg.SetFromIconName("folder-open-symbolic")
 		} else if c.IsSmart {
-			iconImg.SetFromIconName("edit-find-symbolic")
+			iconImg.SetFromIconName("system-search-symbolic")
 		} else {
-			iconImg.SetFromIconName("folder-saved-search-symbolic")
+			iconImg.SetFromIconName("folder-documents-symbolic")
 		}
 
 		// Try to load cover image if available
@@ -182,11 +182,11 @@ func (s *CollectionsScreen) Refresh() {
 
 			// Determine icon based on collection type
 			if c.IsVirtual {
-				img.SetFromIconName("folder-remote-symbolic")
+				img.SetFromIconName("folder-open-symbolic")
 			} else if c.IsSmart {
-				img.SetFromIconName("edit-find-symbolic")
+				img.SetFromIconName("system-search-symbolic")
 			} else {
-				img.SetFromIconName("folder-saved-search-symbolic")
+				img.SetFromIconName("folder-documents-symbolic")
 			}
 
 			// Try to load cover image if available
