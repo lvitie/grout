@@ -15,9 +15,8 @@ func (cm *Manager) GetPlatforms() ([]romm.Platform, error) {
 	defer cm.mu.RUnlock()
 
 	rows, err := cm.db.Query(`
-		SELECT p.data_json, COALESCE(s.games_synced, p.rom_count)
+		SELECT p.data_json, (SELECT COUNT(*) FROM games WHERE platform_id = p.id)
 		FROM platforms p
-		LEFT JOIN platform_sync_status s ON p.id = s.platform_id
 		ORDER BY p.name
 	`)
 	if err != nil {

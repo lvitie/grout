@@ -96,6 +96,15 @@ func (cm *Manager) populateCache(platforms []romm.Platform, progress *atomic.Flo
 		if err == nil {
 			romm.DisambiguatePlatformNames(allPlatforms)
 			platforms = cm.GetPlatformsNeedingSync(allPlatforms)
+
+			// Recovery: if we have platforms but NO games in the DB, sync everything
+			var gameCount int
+			cm.db.QueryRow("SELECT COUNT(*) FROM games").Scan(&gameCount)
+			if gameCount == 0 && len(allPlatforms) > 0 {
+				logger.Info("Games table is empty, forcing full sync of all platforms for recovery")
+				platforms = allPlatforms
+				isBulkLoad = true // Force full sync (no UpdatedAfter)
+			}
 		}
 	}
 
