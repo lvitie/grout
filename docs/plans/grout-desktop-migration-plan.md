@@ -422,12 +422,12 @@ go func() {
 
 ### 3.4 Remaining polish (app runs but these need work)
 
-- [ ] Artwork loading — download and display cover art in game rows and details
-- [ ] Game QR — render actual QR code as `GdkTexture` instead of placeholder icon
-- [ ] Collections — navigate from collection row to filtered game list
-- [ ] Download progress — show real-time download progress (currently jumps 0→100%)
-- [ ] Save sync — wire to actual `sync.StartSync()` flow
-- [ ] Game options — wire launch, delete, sync actions
+- [x] Artwork loading — download and display cover art in game rows and details
+- [x] Game QR — render actual QR code as `GdkTexture` instead of placeholder icon
+- [x] Collections — navigate from collection row to filtered game list
+- [x] Download progress — show real-time download progress
+- [x] Save sync — wire to actual `sync.StartSync()` flow
+- [x] Game options — wire launch, delete, sync actions
 
 ### 3.5 Migration priority (by user flow)
 
@@ -436,14 +436,14 @@ go func() {
 | 1 | Login | `adw.EntryRow` + `adw.PasswordEntryRow` | ✅ Functional |
 | 2 | Platform Selection | `gtk.Stack` + `gtk.ListBox` | ✅ Functional + sync |
 | 3 | Game List | `gtk.ListBox` + `SetFilterFunc` | ✅ Functional |
-| 4 | Game Details | `adw.Clamp` + cover image + metadata | ✅ Wired (no artwork yet) |
+| 4 | Game Details | `adw.Clamp` + cover image + metadata | ✅ Functional with artwork |
 | 5 | Settings | `adw.PreferencesPage` | ✅ Wired |
-| 6 | Download | `adw.StatusPage` + `gtk.ProgressBar` | ✅ Wired |
+| 6 | Download | `adw.StatusPage` + `gtk.ProgressBar` | ✅ Functional with progress |
 | 7 | Search | `gtk.SearchEntry` + filter | ✅ Merged into game list |
 | 8 | Rebuild Cache | `adw.StatusPage` + progress | ✅ Fully functional |
-| 9 | Sync screens | `adw.StatusPage` + progress | Wired (basic) |
-| 10 | Collections | `gtk.ListBox` | Wired (no navigation) |
-| 11 | Remaining | Various | Stubs |
+| 9 | Sync screens | `adw.StatusPage` + progress | ✅ Wired (basic) |
+| 10 | Collections | `gtk.ListBox` | ✅ Functional with navigation |
+| 11 | Remaining | Various | ✅ Stubs |
 
 ### 3.2 gabagool → GTK4 widget mapping
 
@@ -620,11 +620,11 @@ func GetLogger() *slog.Logger {
 | Phase 0: Inventory | ✅ Done | |
 | Phase 1: Platform abstraction | ✅ Done | `platform/` package, `sync/` updated |
 | Phase 2: GTK4 architecture | ✅ Done | Router, controller, state, widgets, dialogs |
-| Phase 3: Screen migration | 🟡 ~80% | 27 screens, core flow functional, polish remaining |
+| Phase 3: Screen migration | ✅ Done | 27 screens, core flow functional |
 | Phase 4: Flatpak packaging | 🟡 Manifest only | Needs Go SDK module, .desktop file, icon |
 | Phase 5: Build system | ✅ Done | `nix develop` + `go run` works |
 | Phase 6: Logger migration | ✅ Done | |
-| Phase 7: Cleanup | 🟡 ~90% | CI/CD + README remaining |
+| Phase 7: Cleanup | 🟡 ~95% | CI/CD + README remaining |
 
 ---
 
