@@ -98,6 +98,7 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 	flowBox.SetMarginEnd(12)
 	flowBox.SetMarginTop(12)
 	flowBox.SetMarginBottom(12)
+	flowBox.SetHomogeneous(false)
 
 	gridGames := s.games // Keep reference for click handling
 	for _, g := range gridGames {

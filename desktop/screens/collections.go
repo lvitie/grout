@@ -67,6 +67,7 @@ func (s *CollectionsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	s.flowBox.SetMarginEnd(12)
 	s.flowBox.SetMarginTop(12)
 	s.flowBox.SetMarginBottom(12)
+	s.flowBox.SetHomogeneous(false)
 
 	// Handle selection changes
 	s.flowBox.ConnectChildActivated(func(child *gtk.FlowBoxChild) {

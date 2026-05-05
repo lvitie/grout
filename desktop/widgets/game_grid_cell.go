@@ -15,22 +15,27 @@ type GameGridCell struct {
 }
 
 func NewGameGridCell(game romm.Rom) *GameGridCell {
-	box := gtk.NewBox(gtk.OrientationVertical, 6)
-	box.SetSizeRequest(150, 200)
-	box.SetHAlign(gtk.AlignCenter)
-	box.SetVAlign(gtk.AlignStart)
-	box.SetHExpand(false)
-	box.SetVExpand(false)
-
 	img := gtk.NewImage()
 	img.SetPixelSize(128)
 	img.SetFromIconName("image-missing-symbolic")
-	box.Append(img)
+	img.SetHExpand(false)
+	img.SetVExpand(false)
 
 	label := gtk.NewLabel(desktop.EscapeMarkup(game.Name))
 	label.SetWrap(true)
 	label.SetMaxWidthChars(15)
 	label.SetJustify(gtk.JustifyCenter)
+	label.SetHExpand(false)
+	label.SetVExpand(false)
+
+	box := gtk.NewBox(gtk.OrientationVertical, 6)
+	box.SetSizeRequest(150, -1)
+	box.SetHomogeneous(false)
+	box.SetHAlign(gtk.AlignCenter)
+	box.SetVAlign(gtk.AlignStart)
+	box.SetHExpand(false)
+	box.SetVExpand(false)
+	box.Append(img)
 	box.Append(label)
 
 	return &GameGridCell{

@@ -185,6 +185,7 @@ func (s *PlatformSelectionScreen) buildListView(router *desktop.Router) gtk.Widg
 	flowBox.SetMarginEnd(12)
 	flowBox.SetMarginTop(12)
 	flowBox.SetMarginBottom(12)
+	flowBox.SetHomogeneous(false)
 
 	gridPlatforms := s.platforms // Keep reference for click handling
 	for _, p := range gridPlatforms {
