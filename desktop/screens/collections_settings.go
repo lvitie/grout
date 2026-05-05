@@ -32,7 +32,7 @@ func (s *CollectionsSettingsScreen) Build(router *desktop.Router) gtk.Widgetter 
 	regularRow := adw.NewSwitchRow()
 	regularRow.SetTitle("Regular Collections")
 	regularRow.SetActive(s.config.ShowRegularCollections)
-	regularRow.ConnectActivated(func() {
+	regularRow.Connect("notify::active", func() {
 		s.config.ShowRegularCollections = regularRow.Active()
 		internal.SaveConfig(s.config)
 		if cm := cache.GetCacheManager(); cm != nil {
@@ -44,7 +44,7 @@ func (s *CollectionsSettingsScreen) Build(router *desktop.Router) gtk.Widgetter 
 	smartRow := adw.NewSwitchRow()
 	smartRow.SetTitle("Smart Collections")
 	smartRow.SetActive(s.config.ShowSmartCollections)
-	smartRow.ConnectActivated(func() {
+	smartRow.Connect("notify::active", func() {
 		s.config.ShowSmartCollections = smartRow.Active()
 		internal.SaveConfig(s.config)
 		if cm := cache.GetCacheManager(); cm != nil {
@@ -56,7 +56,7 @@ func (s *CollectionsSettingsScreen) Build(router *desktop.Router) gtk.Widgetter 
 	virtualRow := adw.NewSwitchRow()
 	virtualRow.SetTitle("Virtual Collections")
 	virtualRow.SetActive(s.config.ShowVirtualCollections)
-	virtualRow.ConnectActivated(func() {
+	virtualRow.Connect("notify::active", func() {
 		s.config.ShowVirtualCollections = virtualRow.Active()
 		internal.SaveConfig(s.config)
 		if cm := cache.GetCacheManager(); cm != nil {

@@ -34,7 +34,7 @@ func (s *SettingsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	downloadArtRow.SetTitle("Download Artwork")
 	downloadArtRow.SetSubtitle("Automatically fetch boxart from RomM")
 	downloadArtRow.SetActive(s.config.DownloadArt)
-	downloadArtRow.ConnectActivated(func() {
+	downloadArtRow.Connect("notify::active", func() {
 		s.config.DownloadArt = downloadArtRow.Active()
 		internal.SaveConfig(s.config)
 	})
@@ -43,7 +43,7 @@ func (s *SettingsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	unzipRow := adw.NewSwitchRow()
 	unzipRow.SetTitle("Unzip Downloads")
 	unzipRow.SetActive(s.config.UnzipDownloads)
-	unzipRow.ConnectActivated(func() {
+	unzipRow.Connect("notify::active", func() {
 		s.config.UnzipDownloads = unzipRow.Active()
 		internal.SaveConfig(s.config)
 	})
@@ -57,7 +57,7 @@ func (s *SettingsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	showBoxArtRow := adw.NewSwitchRow()
 	showBoxArtRow.SetTitle("Show Box Art")
 	showBoxArtRow.SetActive(s.config.ShowBoxArt)
-	showBoxArtRow.ConnectActivated(func() {
+	showBoxArtRow.Connect("notify::active", func() {
 		s.config.ShowBoxArt = showBoxArtRow.Active()
 		internal.SaveConfig(s.config)
 	})
