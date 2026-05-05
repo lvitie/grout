@@ -1,9 +1,11 @@
 package screens
 
 import (
+	"fmt"
 	"grout/cache"
 	"grout/desktop"
 	"grout/romm"
+
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
@@ -29,18 +31,29 @@ func (s *CollectionsScreen) Build(router *desktop.Router) gtk.Widgetter {
 
 	for _, c := range s.collections {
 		row := adw.NewActionRow()
-		row.SetTitle(c.Name)
-		row.SetSubtitle(c.Description)
-		row.SetSelectable(true)
+		row.SetTitle(desktop.EscapeMarkup(c.Name))
+		
+		subtitle := fmt.Sprintf("%d games", c.ROMCount)
+		if c.IsSmart {
+			subtitle += " (Smart)"
+		} else if c.IsVirtual {
+			subtitle += " (Virtual)"
+		}
+		row.SetSubtitle(desktop.EscapeMarkup(subtitle))
+		row.SetActivatable(true)
 		listBox.Append(row)
 	}
 
 	listBox.ConnectRowActivated(func(row *gtk.ListBoxRow) {
-		_ = row.Index() // TODO: navigate to collection game list
+		idx := row.Index()
+		if idx >= 0 && idx < len(s.collections) {
+			router.Navigate(NewCollectionGameListScreen(router, s.collections[idx]))
+		}
 	})
 
 	scrolled := gtk.NewScrolledWindow()
 	scrolled.SetChild(listBox)
+	scrolled.SetVExpand(true)
 
 	header := adw.NewHeaderBar()
 	header.SetTitleWidget(adw.NewWindowTitle("Collections", ""))

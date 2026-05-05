@@ -12,18 +12,28 @@ import (
 )
 
 type GameListScreen struct {
-	router   *desktop.Router
-	platform romm.Platform
-	games    []romm.Rom
+	router *desktop.Router
+	title  string
+	games  []romm.Rom
 }
 
 func NewGameListScreen(router *desktop.Router, platform romm.Platform) *GameListScreen {
 	cm := cache.GetCacheManager()
 	games, _ := cm.GetPlatformGames(platform.ID)
 	return &GameListScreen{
-		router:   router,
-		platform: platform,
-		games:    games,
+		router: router,
+		title:  platform.Name,
+		games:  games,
+	}
+}
+
+func NewCollectionGameListScreen(router *desktop.Router, collection romm.Collection) *GameListScreen {
+	cm := cache.GetCacheManager()
+	games, _ := cm.GetCollectionGames(collection)
+	return &GameListScreen{
+		router: router,
+		title:  collection.Name,
+		games:  games,
 	}
 }
 
@@ -79,14 +89,14 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 	scrolled.SetHExpand(true)
 
 	header := adw.NewHeaderBar()
-	header.SetTitleWidget(adw.NewWindowTitle(s.platform.Name, ""))
+	header.SetTitleWidget(adw.NewWindowTitle(desktop.EscapeMarkup(s.title), ""))
 	header.PackStart(searchBar)
 
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	box.Append(header)
 	box.Append(scrolled)
 
-	page := adw.NewNavigationPage(box, s.platform.Name)
+	page := adw.NewNavigationPage(box, s.title)
 	return page
 }
 

@@ -93,6 +93,13 @@ func (s *PlatformSelectionScreen) buildListView(router *desktop.Router) gtk.Widg
 	})
 	header.PackEnd(syncBtn)
 
+	collectionsBtn := gtk.NewButtonFromIconName("folder-saved-search-symbolic")
+	collectionsBtn.SetTooltipText("Collections")
+	collectionsBtn.ConnectClicked(func() {
+		router.Navigate(NewCollectionsScreen(router))
+	})
+	header.PackEnd(collectionsBtn)
+
 	settingsBtn := gtk.NewButtonFromIconName("emblem-system-symbolic")
 	settingsBtn.SetTooltipText("Settings")
 	settingsBtn.ConnectClicked(func() {
