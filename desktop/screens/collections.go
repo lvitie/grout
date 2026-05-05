@@ -131,6 +131,7 @@ func (s *CollectionsScreen) Refresh() {
 	}
 
 	// Add rows to list
+	host := s.router.State().GetHost()
 	for _, c := range s.collections {
 		row := adw.NewActionRow()
 		row.SetTitle(desktop.EscapeMarkup(c.Name))
@@ -143,6 +144,26 @@ func (s *CollectionsScreen) Refresh() {
 		}
 		row.SetSubtitle(desktop.EscapeMarkup(subtitle))
 		row.SetActivatable(true)
+
+		// Add collection icon/cover
+		iconImg := gtk.NewImage()
+		iconImg.SetPixelSize(48)
+
+		// Determine icon based on collection type
+		if c.IsVirtual {
+			iconImg.SetFromIconName("folder-remote-symbolic")
+		} else if c.IsSmart {
+			iconImg.SetFromIconName("edit-find-symbolic")
+		} else {
+			iconImg.SetFromIconName("folder-saved-search-symbolic")
+		}
+
+		// Try to load cover image if available
+		if c.URLCover != "" && host != nil {
+			desktop.LoadImageAsync(iconImg, c.URLCover, 48)
+		}
+
+		row.AddPrefix(iconImg)
 		s.listBox.Append(row)
 	}
 
@@ -158,7 +179,21 @@ func (s *CollectionsScreen) Refresh() {
 
 			img := gtk.NewImage()
 			img.SetPixelSize(128)
-			img.SetFromIconName("folder-saved-search-symbolic")
+
+			// Determine icon based on collection type
+			if c.IsVirtual {
+				img.SetFromIconName("folder-remote-symbolic")
+			} else if c.IsSmart {
+				img.SetFromIconName("edit-find-symbolic")
+			} else {
+				img.SetFromIconName("folder-saved-search-symbolic")
+			}
+
+			// Try to load cover image if available
+			if c.URLCover != "" && host != nil {
+				desktop.LoadImageAsync(img, c.URLCover, 128)
+			}
+
 			cell.Append(img)
 
 			label := gtk.NewLabel(desktop.EscapeMarkup(c.Name))
