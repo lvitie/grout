@@ -1,11 +1,11 @@
 package screens
 
 import (
+	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"grout/cache"
 	"grout/desktop"
 	"grout/internal"
-	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
-	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
 type CollectionsSettingsScreen struct {

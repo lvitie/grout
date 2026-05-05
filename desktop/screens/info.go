@@ -2,10 +2,10 @@ package screens
 
 import (
 	"fmt"
-	"grout/desktop"
-	"grout/version"
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"grout/desktop"
+	"grout/version"
 )
 
 type InfoScreen struct {

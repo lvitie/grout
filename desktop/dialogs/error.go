@@ -10,10 +10,10 @@ func ShowError(parent *gtk.Window, title, body string) {
 	dialog.AddResponse("ok", "OK")
 	dialog.SetDefaultResponse("ok")
 	dialog.SetResponseAppearance("ok", adw.ResponseDestructive)
-	
+
 	dialog.ConnectResponse(func(response string) {
 		dialog.Destroy()
 	})
-	
+
 	dialog.Present()
 }

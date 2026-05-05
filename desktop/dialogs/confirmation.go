@@ -12,13 +12,13 @@ func ShowConfirmation(parent *gtk.Window, title, body, confirmLabel string, onCo
 	dialog.SetResponseAppearance("confirm", adw.ResponseSuggested)
 	dialog.SetDefaultResponse("confirm")
 	dialog.SetCloseResponse("cancel")
-	
+
 	dialog.ConnectResponse(func(response string) {
 		if response == "confirm" {
 			onConfirm()
 		}
 		dialog.Destroy()
 	})
-	
+
 	dialog.Present()
 }

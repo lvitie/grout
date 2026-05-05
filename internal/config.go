@@ -3,9 +3,9 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
-	"grout/romm"
-	"grout/platform"
 	"grout/internal/artutil"
+	"grout/platform"
+	"grout/romm"
 	"os"
 	"path/filepath"
 	"sync/atomic"
@@ -201,9 +201,9 @@ func SaveConfig(config *Config) error {
 	// For now, I'll just ignore it or implement it in internal/logger.go later.
 
 	/*
-	if err := i18n.SetWithCode(config.Language); err != nil {
-		GetLogger().Error("Failed to set language", "error", err, "language", config.Language)
-	}
+		if err := i18n.SetWithCode(config.Language); err != nil {
+			GetLogger().Error("Failed to set language", "error", err, "language", config.Language)
+		}
 	*/
 	// For now, we don't have a SetWithCode in our minimal wrapper.
 	// We will implement this in Phase 7.
@@ -356,10 +356,10 @@ func (c Config) GetPlatformRomDirectory(pi romm.Platform) string {
 	if mapping, ok := c.DirectoryMappings[pi.FSSlug]; ok && mapping.RelativePath != "" {
 		rp = mapping.RelativePath
 	}
-	
+
 	// Join with base rom directory from platform
 	baseRomDir := platform.GetCurrent().RomDirectory()
-	
+
 	return filepath.Join(baseRomDir, rp)
 }
 
@@ -412,4 +412,3 @@ func (c Config) GetBoxbackDirectory(pi romm.Platform) string {
 	romDir := c.GetPlatformRomDirectory(pi)
 	return platform.GetCurrent().GetBoxbackDirectory(romDir, pi.FSSlug, pi.Name)
 }
-

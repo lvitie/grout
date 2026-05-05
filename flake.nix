@@ -38,6 +38,7 @@
             gtk4
             libadwaita
             gobject-introspection
+            librsvg
           ];
 
           subPackages = [ "cmd/grout-desktop" ];
@@ -83,6 +84,7 @@
             gtk4
             libadwaita
             gobject-introspection
+            librsvg
             libx11
             libxxf86vm
 
@@ -96,6 +98,10 @@
 
           shellHook = ''
             export CGO_CFLAGS="-Wno-builtin-declaration-mismatch"
+            
+            # Fix GDK pixbuf loaders for SVG support during 'go run'
+            export GDK_PIXBUF_MODULE_FILE=$(echo ${pkgs.librsvg}/lib/gdk-pixbuf-2.0/*/loaders.cache)
+            
             echo "✓ Grout development environment loaded"
             echo ""
             echo "Quick commands:"

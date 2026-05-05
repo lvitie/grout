@@ -1,9 +1,9 @@
 package screens
 
 import (
-	"grout/desktop"
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"grout/desktop"
 )
 
 type BiosDownloadScreen struct {

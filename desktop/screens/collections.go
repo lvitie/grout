@@ -70,7 +70,7 @@ func (s *CollectionsScreen) Refresh() {
 		if config != nil && !config.ShowRegularCollections && !config.ShowSmartCollections && !config.ShowVirtualCollections {
 			msg = "Collections are currently disabled in Settings."
 		}
-		
+
 		if child := s.stack.ChildByName("empty"); child != nil {
 			if statusPage, ok := child.(*adw.StatusPage); ok {
 				statusPage.SetDescription(msg)
@@ -95,7 +95,7 @@ func (s *CollectionsScreen) Refresh() {
 	for _, c := range s.collections {
 		row := adw.NewActionRow()
 		row.SetTitle(desktop.EscapeMarkup(c.Name))
-		
+
 		subtitle := fmt.Sprintf("%d games", c.ROMCount)
 		if c.IsSmart {
 			subtitle += " (Smart)"

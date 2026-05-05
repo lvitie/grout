@@ -68,4 +68,3 @@ func PrunePlatformOrder(order []string, mappings map[string]DirectoryMapping) []
 
 	return pruned
 }
-

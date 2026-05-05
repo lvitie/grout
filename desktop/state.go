@@ -10,7 +10,7 @@ type AppState struct {
 	mu     sync.RWMutex
 	config *internal.Config
 	host   *romm.Host
-	
+
 	// Listeners for state changes
 	listeners []func()
 }
@@ -25,7 +25,7 @@ func NewAppState() *AppState {
 	if cfg != nil && len(cfg.Hosts) > 0 {
 		host = &cfg.Hosts[0]
 	}
-	
+
 	return &AppState{
 		config: cfg,
 		host:   host,

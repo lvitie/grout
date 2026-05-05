@@ -1,14 +1,14 @@
 package screens
 
 import (
+	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"grout/cache"
 	"grout/desktop"
+	"grout/desktop/widgets"
 	"grout/internal"
 	"grout/romm"
 	"strings"
-	"grout/desktop/widgets"
-	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
-	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
 type GameListScreen struct {

@@ -1,9 +1,9 @@
 package controller
 
 import (
-	"grout/internal"
-	"github.com/holoplot/go-evdev"
 	"github.com/diamondburned/gotk4/pkg/core/glib"
+	"github.com/holoplot/go-evdev"
+	"grout/internal"
 	"path/filepath"
 )
 

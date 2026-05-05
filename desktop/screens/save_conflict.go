@@ -1,10 +1,10 @@
 package screens
 
 import (
-	"grout/desktop"
-	"grout/romm"
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"grout/desktop"
+	"grout/romm"
 )
 
 type SaveConflictScreen struct {

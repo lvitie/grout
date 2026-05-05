@@ -185,6 +185,15 @@ func (c *Client) doRequestRaw(method, path string, body interface{}) ([]byte, er
 	return bodyBytes, nil
 }
 
+// GetAsset fetches a raw asset from the server using its relative path.
+func (c *Client) GetAsset(path string) ([]byte, error) {
+	// If it doesn't start with /assets or http, assume it's a relative resource path
+	if path != "" && !strings.HasPrefix(path, "http") && !strings.HasPrefix(path, "/assets") {
+		path = "/assets/romm/resources/" + strings.TrimPrefix(path, "/")
+	}
+	return c.doRequestRaw("GET", path, nil)
+}
+
 func (c *Client) doRequestRawWithQuery(method, path string, queryParams queryParam) ([]byte, error) {
 	fullURL := c.baseURL + path
 

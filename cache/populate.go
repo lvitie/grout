@@ -33,7 +33,7 @@ func (cm *Manager) populateCache(platforms []romm.Platform, progress *atomic.Flo
 	var updatedAfter string
 	hasCache := cm.HasCache()
 	isBulkLoad := !hasCache || force
-	
+
 	logger.Debug("Sync decision inputs", "force", force, "hasCache", hasCache)
 
 	// If we have very few games, we should probably do a full sync anyway
@@ -47,7 +47,7 @@ func (cm *Manager) populateCache(platforms []romm.Platform, progress *atomic.Flo
 			isBulkLoad = true
 		}
 	}
-	
+
 	if isBulkLoad {
 		updatedAfter = ""
 		logger.Info("Sync mode: FULL REFRESH", "force", force, "empty_cache", !hasCache, "is_bulk", isBulkLoad)
@@ -61,7 +61,7 @@ func (cm *Manager) populateCache(platforms []romm.Platform, progress *atomic.Flo
 			updatedAfter = ""
 		}
 	}
-	
+
 	if isBulkLoad {
 		// Bulk load optimizations for fresh cache
 		cm.enableBulkLoadMode()
@@ -95,6 +95,12 @@ func (cm *Manager) populateCache(platforms []romm.Platform, progress *atomic.Flo
 		allPlatforms, err := client.GetPlatforms()
 		if err == nil {
 			romm.DisambiguatePlatformNames(allPlatforms)
+
+			// Always update platform metadata in cache if we successfully fetched them
+			if err := cm.SavePlatforms(allPlatforms); err != nil {
+				logger.Warn("Failed to update platform metadata in cache", "error", err)
+			}
+
 			platforms = cm.GetPlatformsNeedingSync(allPlatforms)
 
 			// Recovery: if we have platforms but NO games in the DB, sync everything
@@ -116,7 +122,7 @@ func (cm *Manager) populateCache(platforms []romm.Platform, progress *atomic.Flo
 	if totalExpectedGames == 0 && len(platforms) > 0 {
 		totalExpectedGames = int64(len(platforms))
 	}
-	
+
 	logger.Info("Sync planned", "total_platforms", len(platforms), "total_expected_games", totalExpectedGames)
 
 	// Progress: games 0-85%, collections 85-98%, done 100%
@@ -170,7 +176,7 @@ func (cm *Manager) populateCache(platforms []romm.Platform, progress *atomic.Flo
 			logger.Info("Synced platform games", "id", p.ID, "name", p.Name, "count", count)
 			cm.RecordPlatformSyncSuccess(p.ID, count)
 		}
-		
+
 		// Update progress even if 0 games were found to show we've moved to the next platform
 		if progress != nil {
 			platformPct := float64(i+1) / float64(len(platforms))
@@ -230,7 +236,7 @@ func (cm *Manager) fetchPlatformGames(platform romm.Platform, opts *fetchOpts) (
 	var allGames []romm.Rom
 	offset := 0
 	expectedTotal := 0
-	
+
 	fetchUpdatedAfter := opts.updatedAfter
 	if opts.force {
 		fetchUpdatedAfter = ""

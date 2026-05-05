@@ -139,7 +139,7 @@ func (s *RebuildCacheScreen) startRebuild(router *desktop.Router, statusPage *ad
 			statusPage.SetTitle("Rebuild Complete")
 			statusPage.SetDescription("Your library has been successfully re-synced.")
 			statusPage.SetIconName("emblem-ok-symbolic")
-			
+
 			doneBtn := gtk.NewButtonWithLabel("Done")
 			doneBtn.AddCSSClass("suggested-action")
 			doneBtn.SetMarginTop(20)

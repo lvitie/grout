@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	internal "grout/internal"
 	"go.uber.org/atomic"
+	internal "grout/internal"
 	_ "modernc.org/sqlite"
 )
 

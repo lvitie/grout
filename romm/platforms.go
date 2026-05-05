@@ -9,6 +9,8 @@ type Platform struct {
 	ID                  int        `json:"id"`
 	Slug                string     `json:"slug"`
 	FSSlug              string     `json:"fs_slug"`
+	IgdbSlug            string     `json:"igdb_slug"`
+	MobySlug            string     `json:"moby_slug"`
 	Name                string     `json:"name"`
 	ApiName             string     `json:"-"` // Original name from API (not serialized, set by DisambiguatePlatformNames)
 	CustomName          string     `json:"custom_name"`

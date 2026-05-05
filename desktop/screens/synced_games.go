@@ -2,10 +2,10 @@ package screens
 
 import (
 	"fmt"
-	"grout/cache"
-	"grout/desktop"
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"grout/cache"
+	"grout/desktop"
 )
 
 type SyncedGamesScreen struct {
@@ -18,7 +18,7 @@ func NewSyncedGamesScreen(router *desktop.Router) *SyncedGamesScreen {
 
 func (s *SyncedGamesScreen) Build(router *desktop.Router) gtk.Widgetter {
 	listBox := gtk.NewListBox()
-	
+
 	cm := cache.GetCacheManager()
 	host := router.State().GetHost()
 	deviceID := ""
@@ -26,7 +26,7 @@ func (s *SyncedGamesScreen) Build(router *desktop.Router) gtk.Widgetter {
 		deviceID = host.DeviceID
 	}
 	ids := cm.GetSyncedRomIDs(deviceID)
-	
+
 	for _, id := range ids {
 		row := adw.NewActionRow()
 		row.SetTitle(fmt.Sprintf("ROM #%d", id))

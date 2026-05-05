@@ -1,10 +1,10 @@
 package screens
 
 import (
-	"grout/cache"
-	"grout/desktop"
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"grout/cache"
+	"grout/desktop"
 )
 
 type SyncHistoryScreen struct {
@@ -17,7 +17,7 @@ func NewSyncHistoryScreen(router *desktop.Router) *SyncHistoryScreen {
 
 func (s *SyncHistoryScreen) Build(router *desktop.Router) gtk.Widgetter {
 	listBox := gtk.NewListBox()
-	
+
 	cm := cache.GetCacheManager()
 	host := router.State().GetHost()
 	deviceID := ""
@@ -25,7 +25,7 @@ func (s *SyncHistoryScreen) Build(router *desktop.Router) gtk.Widgetter {
 		deviceID = host.DeviceID
 	}
 	history := cm.GetSaveSyncHistory(deviceID)
-	
+
 	for _, entry := range history {
 		row := adw.NewActionRow()
 		row.SetTitle(entry.RomName)
