@@ -30,25 +30,6 @@ func (s *SettingsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	generalGroup.SetTitle("General")
 	page.Add(generalGroup)
 
-	downloadArtRow := adw.NewSwitchRow()
-	downloadArtRow.SetTitle("Download Artwork")
-	downloadArtRow.SetSubtitle("Automatically fetch boxart from RomM")
-	downloadArtRow.SetActive(s.config.DownloadArt)
-	downloadArtRow.Connect("notify::active", func() {
-		s.config.DownloadArt = downloadArtRow.Active()
-		internal.SaveConfig(s.config)
-	})
-	generalGroup.Add(downloadArtRow)
-
-	unzipRow := adw.NewSwitchRow()
-	unzipRow.SetTitle("Unzip Downloads")
-	unzipRow.SetActive(s.config.UnzipDownloads)
-	unzipRow.Connect("notify::active", func() {
-		s.config.UnzipDownloads = unzipRow.Active()
-		internal.SaveConfig(s.config)
-	})
-	generalGroup.Add(unzipRow)
-
 	closeToTrayRow := adw.NewSwitchRow()
 	closeToTrayRow.SetTitle("Close to Tray")
 	closeToTrayRow.SetSubtitle("Keep running in the background when the window is closed")
@@ -60,20 +41,6 @@ func (s *SettingsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	})
 	generalGroup.Add(closeToTrayRow)
 
-	// Appearance Group
-	appearanceGroup := adw.NewPreferencesGroup()
-	appearanceGroup.SetTitle("Appearance")
-	page.Add(appearanceGroup)
-
-	showBoxArtRow := adw.NewSwitchRow()
-	showBoxArtRow.SetTitle("Show Box Art")
-	showBoxArtRow.SetActive(s.config.ShowBoxArt)
-	showBoxArtRow.Connect("notify::active", func() {
-		s.config.ShowBoxArt = showBoxArtRow.Active()
-		internal.SaveConfig(s.config)
-	})
-	appearanceGroup.Add(showBoxArtRow)
-
 	collectionsRow := adw.NewActionRow()
 	collectionsRow.SetTitle("Collections")
 	collectionsRow.SetSubtitle("Configure regular, smart, and virtual collections visibility")
@@ -81,7 +48,7 @@ func (s *SettingsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	collectionsRow.ConnectActivated(func() {
 		router.Navigate(NewCollectionsSettingsScreen(router))
 	})
-	appearanceGroup.Add(collectionsRow)
+	generalGroup.Add(collectionsRow)
 
 	// More Group
 	moreGroup := adw.NewPreferencesGroup()
@@ -96,15 +63,6 @@ func (s *SettingsScreen) Build(router *desktop.Router) gtk.Widgetter {
 		router.Navigate(NewSyncMenuScreen(router))
 	})
 	moreGroup.Add(saveSyncRow)
-
-	advancedRow := adw.NewActionRow()
-	advancedRow.SetTitle("Advanced")
-	advancedRow.SetSubtitle("Network, logging, and experimental settings")
-	advancedRow.SetActivatable(true)
-	advancedRow.ConnectActivated(func() {
-		router.Navigate(NewAdvancedSettingsScreen(router))
-	})
-	moreGroup.Add(advancedRow)
 
 	toolsRow := adw.NewActionRow()
 	toolsRow.SetTitle("Tools")

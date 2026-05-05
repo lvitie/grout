@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"grout/internal"
 	"grout/romm"
-	"runtime"
 	"sync"
 	"time"
 
@@ -12,7 +11,7 @@ import (
 )
 
 const (
-	DefaultRomPageSize           = 100
+	DefaultRomPageSize           = 500
 	MaxConcurrentPlatformFetches = 10
 )
 
@@ -154,44 +153,65 @@ func (cm *Manager) populateCache(platforms []romm.Platform, progress *atomic.Flo
 		return stats, nil
 	}
 
-	for i, p := range platforms {
-		logger.Info("Processing platform", "id", p.ID, "name", p.Name, "expected_rom_count", p.ROMCount)
-		count, err := cm.fetchPlatformGames(p, &fetchOpts{
-			client:       client,
-			onProgress:   updateProgress,
-			updatedAfter: updatedAfter,
-			force:        isBulkLoad,
-		})
+	// Fetch all games in one paginated stream (no per-platform round-trips)
+	fetchUpdatedAfter := updatedAfter
+	if isBulkLoad {
+		fetchUpdatedAfter = ""
+	}
 
+	offset := 0
+	expectedTotal := 0
+	gamesByPlatform := make(map[int][]romm.Rom)
+
+	for {
+		q := romm.GetRomsQuery{
+			Offset:       offset,
+			Limit:        DefaultRomPageSize,
+			UpdatedAfter: fetchUpdatedAfter,
+		}
+
+		res, err := client.GetRoms(q)
 		if err != nil {
-			logger.Error("Failed to fetch/save platform games", "platformID", p.ID, "name", p.Name, "error", err)
+			logger.Error("Failed to fetch games", "offset", offset, "error", err)
+			firstErr = err
+			break
+		}
+
+		if offset == 0 {
+			expectedTotal = res.Total
+			logger.Info("Fetching all games", "total", expectedTotal)
+		}
+
+		for i := range res.Items {
+			pid := res.Items[i].PlatformID
+			gamesByPlatform[pid] = append(gamesByPlatform[pid], res.Items[i])
+		}
+
+		updateProgress(len(res.Items))
+
+		if len(res.Items) == 0 || offset+len(res.Items) >= expectedTotal {
+			break
+		}
+		offset += len(res.Items)
+	}
+
+	// Save grouped by platform (one DB transaction per platform)
+	for _, p := range platforms {
+		games := gamesByPlatform[p.ID]
+		if len(games) == 0 {
+			continue
+		}
+		if err := cm.SavePlatformGames(p.ID, games); err != nil {
+			logger.Error("Failed to save platform games", "platformID", p.ID, "name", p.Name, "error", err)
 			cm.RecordPlatformSyncFailure(p.ID)
 			if firstErr == nil {
 				firstErr = err
 			}
 		} else {
-			if count == 0 && p.ROMCount > 0 {
-				logger.Warn("API returned zero games for platform", "id", p.ID, "name", p.Name, "expected", p.ROMCount, "updated_after", updatedAfter)
-			}
-			logger.Info("Synced platform games", "id", p.ID, "name", p.Name, "count", count)
-			cm.RecordPlatformSyncSuccess(p.ID, count)
+			cm.RecordPlatformSyncSuccess(p.ID, len(games))
 		}
-
-		// Update progress even if 0 games were found to show we've moved to the next platform
-		if progress != nil {
-			platformPct := float64(i+1) / float64(len(platforms))
-			currentVal := progress.Load()
-			newVal := platformPct * 0.85
-			if newVal > currentVal {
-				logger.Info("Platform progress", "platform_idx", i+1, "total_platforms", len(platforms), "percent", fmt.Sprintf("%.1f%%", newVal*100))
-				progress.Store(newVal)
-			}
-		}
-
-		runtime.GC()
 	}
 
-	// Record refresh time only on success
 	if firstErr == nil {
 		cm.RecordRefreshTime(MetaKeyGamesRefreshedAt)
 	}
