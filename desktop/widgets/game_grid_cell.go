@@ -19,6 +19,8 @@ func NewGameGridCell(game romm.Rom) *GameGridCell {
 	box.SetSizeRequest(150, 200)
 	box.SetHAlign(gtk.AlignCenter)
 	box.SetVAlign(gtk.AlignStart)
+	box.SetHExpand(false)
+	box.SetVExpand(false)
 
 	img := gtk.NewImage()
 	img.SetPixelSize(128)

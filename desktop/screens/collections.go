@@ -150,6 +150,8 @@ func (s *CollectionsScreen) Refresh() {
 			cell.SetSizeRequest(150, 200)
 			cell.SetHAlign(gtk.AlignCenter)
 			cell.SetVAlign(gtk.AlignStart)
+			cell.SetHExpand(false)
+			cell.SetVExpand(false)
 
 			img := gtk.NewImage()
 			img.SetPixelSize(128)
