@@ -1,6 +1,7 @@
 package screens
 
 import (
+	"grout/cache"
 	"grout/desktop"
 	"grout/internal"
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -34,6 +35,9 @@ func (s *CollectionsSettingsScreen) Build(router *desktop.Router) gtk.Widgetter 
 	regularRow.ConnectActivated(func() {
 		s.config.ShowRegularCollections = regularRow.Active()
 		internal.SaveConfig(s.config)
+		if cm := cache.GetCacheManager(); cm != nil {
+			cm.UpdateConfig(s.config)
+		}
 	})
 	group.Add(regularRow)
 
@@ -43,6 +47,9 @@ func (s *CollectionsSettingsScreen) Build(router *desktop.Router) gtk.Widgetter 
 	smartRow.ConnectActivated(func() {
 		s.config.ShowSmartCollections = smartRow.Active()
 		internal.SaveConfig(s.config)
+		if cm := cache.GetCacheManager(); cm != nil {
+			cm.UpdateConfig(s.config)
+		}
 	})
 	group.Add(smartRow)
 
@@ -52,6 +59,9 @@ func (s *CollectionsSettingsScreen) Build(router *desktop.Router) gtk.Widgetter 
 	virtualRow.ConnectActivated(func() {
 		s.config.ShowVirtualCollections = virtualRow.Active()
 		internal.SaveConfig(s.config)
+		if cm := cache.GetCacheManager(); cm != nil {
+			cm.UpdateConfig(s.config)
+		}
 	})
 	group.Add(virtualRow)
 

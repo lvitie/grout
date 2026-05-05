@@ -132,6 +132,15 @@ func (cm *Manager) GetDBPath() string {
 	return cm.dbPath
 }
 
+func (cm *Manager) UpdateConfig(config Config) {
+	if cm == nil {
+		return
+	}
+	cm.mu.Lock()
+	cm.config = config
+	cm.mu.Unlock()
+}
+
 func (cm *Manager) Close() error {
 	if cm == nil || cm.db == nil {
 		return nil

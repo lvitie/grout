@@ -111,14 +111,15 @@ func (c Config) ToLoggable() any {
 }
 
 func LoadConfig() (*Config, error) {
-	data, err := os.ReadFile("config.json")
+	path := filepath.Join(platform.GetCurrent().ConfigDir(), "config.json")
+	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("reading config.json: %w", err)
+		return nil, fmt.Errorf("reading %s: %w", path, err)
 	}
 
 	var config Config
 	if err := json.Unmarshal(data, &config); err != nil {
-		return nil, fmt.Errorf("parsing config.json: %w", err)
+		return nil, fmt.Errorf("parsing %s: %w", path, err)
 	}
 
 	if config.ApiTimeout == 0 {
@@ -213,8 +214,15 @@ func SaveConfig(config *Config) error {
 		return err
 	}
 
-	if err := os.WriteFile("config.json", pretty, 0644); err != nil {
-		GetLogger().Error("Failed to write config file", "error", err)
+	path := filepath.Join(platform.GetCurrent().ConfigDir(), "config.json")
+	// Ensure config directory exists
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		GetLogger().Error("Failed to create config directory", "error", err, "path", filepath.Dir(path))
+		return err
+	}
+
+	if err := os.WriteFile(path, pretty, 0644); err != nil {
+		GetLogger().Error("Failed to write config file", "error", err, "path", path)
 		return err
 	}
 
@@ -259,7 +267,8 @@ func (c Config) GetDirectoryMapping(fsSlug string) (string, bool) {
 }
 
 func LoadSlotPreferences() map[string]string {
-	data, err := os.ReadFile("save_slots.json")
+	path := filepath.Join(platform.GetCurrent().ConfigDir(), "save_slots.json")
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil
 	}
@@ -271,15 +280,16 @@ func LoadSlotPreferences() map[string]string {
 }
 
 func SaveSlotPreferences(config *Config) error {
+	path := filepath.Join(platform.GetCurrent().ConfigDir(), "save_slots.json")
 	if len(config.SlotPreferences) == 0 {
-		os.Remove("save_slots.json")
+		os.Remove(path)
 		return nil
 	}
 	pretty, err := json.MarshalIndent(config.SlotPreferences, "", "  ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile("save_slots.json", pretty, 0644)
+	return os.WriteFile(path, pretty, 0644)
 }
 
 func (c Config) GetSlotPreference(romID int) string {
