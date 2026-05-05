@@ -190,9 +190,9 @@ func (s *CollectionsScreen) ShowListView() {
 	s.stack.SetVisibleChildName("list")
 }
 
-func (s *CollectionsScreen) FilterBy(query string) {
-	text := strings.ToLower(query)
+func (s *CollectionsScreen) SetSearchQuery(searchBar *gtk.SearchEntry) {
 	s.listBox.SetFilterFunc(func(row *gtk.ListBoxRow) bool {
+		text := strings.ToLower(searchBar.Text())
 		if text == "" {
 			return true
 		}
@@ -201,10 +201,10 @@ func (s *CollectionsScreen) FilterBy(query string) {
 		}
 		return true
 	})
-	s.listBox.InvalidateFilter()
 
 	if s.flowBox != nil {
 		s.flowBox.SetFilterFunc(func(child *gtk.FlowBoxChild) bool {
+			text := strings.ToLower(searchBar.Text())
 			if text == "" {
 				return true
 			}
@@ -213,6 +213,12 @@ func (s *CollectionsScreen) FilterBy(query string) {
 			}
 			return true
 		})
+	}
+}
+
+func (s *CollectionsScreen) InvalidateCollectionFilters() {
+	s.listBox.InvalidateFilter()
+	if s.flowBox != nil {
 		s.flowBox.InvalidateFilter()
 	}
 }

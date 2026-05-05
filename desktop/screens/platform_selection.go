@@ -62,6 +62,8 @@ func (s *PlatformSelectionScreen) Build(router *desktop.Router) gtk.Widgetter {
 	collectionsView := s.collectionsScreen.Build(router)
 	s.stack.AddTitled(collectionsView, "collections", "Collections")
 
+	// We'll wire the search bar to collections after creating it
+
 	// Sync View
 	syncView := s.buildSyncView(router)
 	s.stack.AddNamed(syncView, "sync")
@@ -98,13 +100,18 @@ func (s *PlatformSelectionScreen) Build(router *desktop.Router) gtk.Widgetter {
 	searchBar := gtk.NewSearchEntry()
 	searchBar.SetPlaceholderText("Search...")
 
+	// Wire search to collections screen
+	s.collectionsScreen.SetSearchQuery(searchBar)
+
 	searchBar.ConnectChanged(func() {
 		query := strings.TrimSpace(searchBar.Text())
 		activeTab := s.stack.VisibleChildName()
 
+		// Always invalidate collections filters
+		s.collectionsScreen.InvalidateCollectionFilters()
+
 		if query == "" {
 			s.outerStack.SetVisibleChildName("main")
-			s.collectionsScreen.FilterBy("")
 			return
 		}
 
@@ -114,7 +121,6 @@ func (s *PlatformSelectionScreen) Build(router *desktop.Router) gtk.Widgetter {
 			go s.runGlobalSearch(query, router)
 		case "collections":
 			s.outerStack.SetVisibleChildName("main")
-			s.collectionsScreen.FilterBy(query)
 		}
 	})
 
