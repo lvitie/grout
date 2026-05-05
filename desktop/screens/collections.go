@@ -159,8 +159,17 @@ func (s *CollectionsScreen) Refresh() {
 		}
 
 		// Try to load cover image if available
-		if c.URLCover != "" && host != nil {
-			desktop.LoadImageAsync(iconImg, c.URLCover, 48)
+		if host != nil && (c.PathCoverSmall != "" || c.URLCover != "") {
+			var coverURL string
+			if c.PathCoverSmall != "" {
+				// Construct full URL from path
+				coverURL = host.URL() + "/assets/romm/resources" + c.PathCoverSmall
+			} else if c.URLCover != "" {
+				coverURL = c.URLCover
+			}
+			if coverURL != "" {
+				desktop.LoadImageAsync(iconImg, coverURL, 48)
+			}
 		}
 
 		row.AddPrefix(iconImg)
@@ -190,8 +199,17 @@ func (s *CollectionsScreen) Refresh() {
 			}
 
 			// Try to load cover image if available
-			if c.URLCover != "" && host != nil {
-				desktop.LoadImageAsync(img, c.URLCover, 128)
+			if host != nil && (c.PathCoverLarge != "" || c.URLCover != "") {
+				var coverURL string
+				if c.PathCoverLarge != "" {
+					// Construct full URL from path
+					coverURL = host.URL() + "/assets/romm/resources" + c.PathCoverLarge
+				} else if c.URLCover != "" {
+					coverURL = c.URLCover
+				}
+				if coverURL != "" {
+					desktop.LoadImageAsync(img, coverURL, 128)
+				}
 			}
 
 			cell.Append(img)
