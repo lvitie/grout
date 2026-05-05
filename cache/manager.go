@@ -124,6 +124,13 @@ func newCacheManager(host romm.Host, config Config) (*Manager, error) {
 	return cm, nil
 }
 
+func (cm *Manager) GetDBPath() string {
+	if cm == nil {
+		return ""
+	}
+	return cm.dbPath
+}
+
 func (cm *Manager) Close() error {
 	if cm == nil || cm.db == nil {
 		return nil

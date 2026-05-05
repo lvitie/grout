@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"grout/cache"
 	"grout/desktop"
+	"grout/internal"
 	"grout/romm"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -13,6 +14,8 @@ import (
 type CollectionsScreen struct {
 	router      *desktop.Router
 	collections []romm.Collection
+	listBox     *gtk.ListBox
+	stack       *gtk.Stack
 }
 
 func NewCollectionsScreen(router *desktop.Router) *CollectionsScreen {
@@ -25,27 +28,78 @@ func NewCollectionsScreen(router *desktop.Router) *CollectionsScreen {
 }
 
 func (s *CollectionsScreen) Build(router *desktop.Router) gtk.Widgetter {
+	s.stack = gtk.NewStack()
+	s.stack.SetTransitionType(gtk.StackTransitionTypeSlideLeftRight)
+
+	// Empty State
+	statusPage := adw.NewStatusPage()
+	statusPage.SetTitle("No Collections Found")
+	statusPage.SetDescription("Make sure collections are enabled in Settings and perform a full library sync.")
+	statusPage.SetIconName("folder-saved-search-symbolic")
+	s.stack.AddNamed(statusPage, "empty")
+
+	// List View
+	s.listBox = gtk.NewListBox()
+	s.listBox.SetSelectionMode(gtk.SelectionSingle)
+	s.listBox.AddCSSClass("navigation-sidebar")
+
+	s.listBox.ConnectRowActivated(func(row *gtk.ListBoxRow) {
+		idx := row.Index()
+		if idx >= 0 && idx < len(s.collections) {
+			router.Navigate(NewCollectionGameListScreen(router, s.collections[idx]))
+		}
+	})
+
+	scrolled := gtk.NewScrolledWindow()
+	scrolled.SetChild(s.listBox)
+	scrolled.SetVExpand(true)
+	s.stack.AddNamed(scrolled, "list")
+
+	s.Refresh()
+
+	header := adw.NewHeaderBar()
+	header.SetTitleWidget(adw.NewWindowTitle("Collections", ""))
+
+	box := gtk.NewBox(gtk.OrientationVertical, 0)
+	box.Append(header)
+	box.Append(s.stack)
+
+	page := adw.NewNavigationPage(box, "Collections")
+	return page
+}
+
+func (s *CollectionsScreen) Refresh() {
+	cm := cache.GetCacheManager()
+	s.collections, _ = cm.GetCollections()
+
 	if len(s.collections) == 0 {
-		statusPage := adw.NewStatusPage()
-		statusPage.SetTitle("No Collections Found")
-		statusPage.SetDescription("Make sure collections are enabled in Settings and perform a full library sync.")
-		statusPage.SetIconName("folder-saved-search-symbolic")
-
-		header := adw.NewHeaderBar()
-		header.SetTitleWidget(adw.NewWindowTitle("Collections", ""))
-
-		box := gtk.NewBox(gtk.OrientationVertical, 0)
-		box.Append(header)
-		box.Append(statusPage)
-
-		page := adw.NewNavigationPage(box, "Collections")
-		return page
+		config, _ := internal.LoadConfig()
+		msg := "Make sure collections are enabled in Settings and perform a full library sync."
+		if config != nil && !config.ShowRegularCollections && !config.ShowSmartCollections && !config.ShowVirtualCollections {
+			msg = "Collections are currently disabled in Settings."
+		}
+		
+		if child := s.stack.ChildByName("empty"); child != nil {
+			if statusPage, ok := child.(*adw.StatusPage); ok {
+				statusPage.SetDescription(msg)
+			}
+		}
+		s.stack.SetVisibleChildName("empty")
+		return
 	}
 
-	listBox := gtk.NewListBox()
-	listBox.SetSelectionMode(gtk.SelectionSingle)
-	listBox.AddCSSClass("navigation-sidebar")
+	s.stack.SetVisibleChildName("list")
 
+	// Clear list
+	for {
+		child := s.listBox.FirstChild()
+		if child == nil {
+			break
+		}
+		s.listBox.Remove(child)
+	}
+
+	// Add rows
 	for _, c := range s.collections {
 		row := adw.NewActionRow()
 		row.SetTitle(desktop.EscapeMarkup(c.Name))
@@ -58,27 +112,6 @@ func (s *CollectionsScreen) Build(router *desktop.Router) gtk.Widgetter {
 		}
 		row.SetSubtitle(desktop.EscapeMarkup(subtitle))
 		row.SetActivatable(true)
-		listBox.Append(row)
+		s.listBox.Append(row)
 	}
-
-	listBox.ConnectRowActivated(func(row *gtk.ListBoxRow) {
-		idx := row.Index()
-		if idx >= 0 && idx < len(s.collections) {
-			router.Navigate(NewCollectionGameListScreen(router, s.collections[idx]))
-		}
-	})
-
-	scrolled := gtk.NewScrolledWindow()
-	scrolled.SetChild(listBox)
-	scrolled.SetVExpand(true)
-
-	header := adw.NewHeaderBar()
-	header.SetTitleWidget(adw.NewWindowTitle("Collections", ""))
-
-	box := gtk.NewBox(gtk.OrientationVertical, 0)
-	box.Append(header)
-	box.Append(scrolled)
-
-	page := adw.NewNavigationPage(box, "Collections")
-	return page
 }

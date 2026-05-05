@@ -23,9 +23,10 @@ type PlatformSelectionScreen struct {
 	statusText *atomic.String
 	
 	// UI elements that need updating
-	stack       *adw.ViewStack
-	progressBar *gtk.ProgressBar
-	listBox     *gtk.ListBox
+	stack             *adw.ViewStack
+	progressBar       *gtk.ProgressBar
+	listBox           *gtk.ListBox
+	collectionsScreen *CollectionsScreen
 }
 
 func NewPlatformSelectionScreen(router *desktop.Router) *PlatformSelectionScreen {
@@ -49,7 +50,8 @@ func (s *PlatformSelectionScreen) Build(router *desktop.Router) gtk.Widgetter {
 	s.stack.AddTitled(listView, "platforms", "Platforms")
 
 	// Collections View
-	collectionsView := NewCollectionsScreen(router).Build(router)
+	s.collectionsScreen = NewCollectionsScreen(router)
+	collectionsView := s.collectionsScreen.Build(router)
 	s.stack.AddTitled(collectionsView, "collections", "Collections")
 
 	// Sync View
@@ -197,7 +199,7 @@ func (s *PlatformSelectionScreen) startProgressMonitor(statusPage *adw.StatusPag
 				// Auto-switch back to list after a short delay if it was an empty start
 				time.AfterFunc(1500*time.Millisecond, func() {
 					glib.IdleAdd(func() {
-						s.stack.SetVisibleChildName("list")
+						s.stack.SetVisibleChildName("platforms")
 					})
 				})
 			}
@@ -223,15 +225,22 @@ func (s *PlatformSelectionScreen) refreshPlatformList() {
 		logger.Error("Failed to load platforms from cache", "error", err)
 	}
 
-	// Filter out platforms with zero games
+	// If the list is empty, don't filter out 0-game platforms (helps debugging/initial sync)
 	s.platforms = make([]romm.Platform, 0)
 	for _, p := range allPlatforms {
-		if p.ROMCount > 0 {
+		if p.ROMCount > 0 || len(allPlatforms) < 10 { // Show all if we have very few, or if they have games
 			s.platforms = append(s.platforms, p)
 		}
 	}
 	
-	logger.Info("Refreshing platform list", "visible_platforms", len(s.platforms), "total_platforms", len(allPlatforms))
+	logger.Info("Refreshing platform list", 
+		"visible_platforms", len(s.platforms), 
+		"total_platforms", len(allPlatforms),
+		"db_path", cm.GetDBPath())
+
+	if s.collectionsScreen != nil {
+		s.collectionsScreen.Refresh()
+	}
 
 	// Clear list
 	for {
