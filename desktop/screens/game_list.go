@@ -150,8 +150,10 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 	})
 
 	// Create toggle button
+	toggleImg := gtk.NewImage()
+	toggleImg.SetFromIconName("view-grid-symbolic")
 	toggleBtn := gtk.NewToggleButton()
-	toggleBtn.SetIconName("view-grid-symbolic")
+	toggleBtn.SetChild(toggleImg)
 	toggleBtn.SetActive(currentMode == desktop.ViewModeGrid)
 	toggleBtn.SetTooltipText("Toggle grid/list view")
 
@@ -160,16 +162,11 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 		if isGridMode {
 			stack.SetVisibleChildName("grid")
 			router.State().SetViewMode(desktop.ViewModeGrid)
+			toggleImg.SetFromIconName("view-list-symbolic")
 		} else {
 			stack.SetVisibleChildName("list")
 			router.State().SetViewMode(desktop.ViewModeList)
-		}
-
-		// Update icon
-		if isGridMode {
-			toggleBtn.SetIconName("view-list-symbolic")
-		} else {
-			toggleBtn.SetIconName("view-grid-symbolic")
+			toggleImg.SetFromIconName("view-grid-symbolic")
 		}
 	})
 
