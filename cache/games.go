@@ -713,6 +713,7 @@ type GameFilter struct {
 	MinSizeBytes         int64
 	MaxSizeBytes         int64
 	NameSearch           string
+	Limit                int // 0 = unlimited
 }
 
 // HasActiveFilters returns true if any filter criteria are set.
@@ -851,6 +852,11 @@ func (cm *Manager) GetFilteredGames(filter GameFilter) ([]romm.Rom, error) {
 	query, args = appendJunctionFilters(query, args, filter, "jt", "lt")
 
 	query += " ORDER BY g.name"
+
+	if filter.Limit > 0 {
+		query += " LIMIT ?"
+		args = append(args, filter.Limit)
+	}
 
 	rows, err := cm.db.Query(query, args...)
 	if err != nil {

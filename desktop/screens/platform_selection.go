@@ -28,10 +28,13 @@ type PlatformSelectionScreen struct {
 
 	// UI elements that need updating
 	stack              *adw.ViewStack
+	outerStack         *gtk.Stack
 	progressBar        *gtk.ProgressBar
 	listBox            *gtk.ListBox
 	platformListStack  *gtk.Stack
 	collectionsScreen  *CollectionsScreen
+	collectionsBox     *gtk.ListBox
+	gamesBox           *gtk.ListBox
 }
 
 func NewPlatformSelectionScreen(router *desktop.Router) *PlatformSelectionScreen {
@@ -74,24 +77,45 @@ func (s *PlatformSelectionScreen) Build(router *desktop.Router) gtk.Widgetter {
 	switcherTitle.SetStack(s.stack)
 	switcherTitle.SetTitle("Grout")
 
+	// Setup outer stack for main/search views
+	s.outerStack = gtk.NewStack()
+	s.outerStack.SetVExpand(true)
+	s.outerStack.AddNamed(s.stack, "main")
+
+	// Create search panel (collections + games results)
+	s.collectionsBox = gtk.NewListBox()
+	s.collectionsBox.SetSelectionMode(gtk.SelectionSingle)
+	s.collectionsBox.AddCSSClass("navigation-sidebar")
+
+	s.gamesBox = gtk.NewListBox()
+	s.gamesBox.SetSelectionMode(gtk.SelectionSingle)
+	s.gamesBox.AddCSSClass("navigation-sidebar")
+
+	searchPanel := s.buildSearchPanel(router)
+	s.outerStack.AddNamed(searchPanel, "search")
+
 	// Search bar
 	searchBar := gtk.NewSearchEntry()
 	searchBar.SetPlaceholderText("Search...")
 
-	s.listBox.SetFilterFunc(func(row *gtk.ListBoxRow) bool {
-		text := strings.ToLower(searchBar.Text())
-		if text == "" {
-			return true
-		}
-		if actionRow, ok := row.Child().(*adw.ActionRow); ok {
-			title := strings.ToLower(actionRow.Title())
-			return strings.Contains(title, text)
-		}
-		return true
-	})
-
 	searchBar.ConnectChanged(func() {
-		s.listBox.InvalidateFilter()
+		query := strings.TrimSpace(searchBar.Text())
+		activeTab := s.stack.VisibleChildName()
+
+		if query == "" {
+			s.outerStack.SetVisibleChildName("main")
+			s.collectionsScreen.FilterBy("")
+			return
+		}
+
+		switch activeTab {
+		case "platforms":
+			s.outerStack.SetVisibleChildName("search")
+			go s.runGlobalSearch(query, router)
+		case "collections":
+			s.outerStack.SetVisibleChildName("main")
+			s.collectionsScreen.FilterBy(query)
+		}
 	})
 
 	// Toggle view button
@@ -149,7 +173,7 @@ func (s *PlatformSelectionScreen) Build(router *desktop.Router) gtk.Widgetter {
 
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	box.Append(header)
-	box.Append(s.stack)
+	box.Append(s.outerStack)
 
 	page := adw.NewNavigationPage(box, "Grout")
 	return page
@@ -745,4 +769,101 @@ func loadPlatformIconAsync(p romm.Platform, img *gtk.Image) {
 			}
 		}
 	}()
+}
+
+func (s *PlatformSelectionScreen) buildSearchPanel(router *desktop.Router) gtk.Widgetter {
+	collectionsLabel := gtk.NewLabel("Collections")
+	collectionsLabel.AddCSSClass("heading")
+	collectionsLabel.SetXAlign(0)
+	collectionsLabel.SetMarginStart(12)
+	collectionsLabel.SetMarginTop(12)
+	collectionsLabel.SetMarginBottom(6)
+
+	gamesLabel := gtk.NewLabel("Games")
+	gamesLabel.AddCSSClass("heading")
+	gamesLabel.SetXAlign(0)
+	gamesLabel.SetMarginStart(12)
+	gamesLabel.SetMarginTop(12)
+	gamesLabel.SetMarginBottom(6)
+
+	box := gtk.NewBox(gtk.OrientationVertical, 0)
+	box.Append(collectionsLabel)
+	box.Append(s.collectionsBox)
+	box.Append(gamesLabel)
+	box.Append(s.gamesBox)
+
+	scrolled := gtk.NewScrolledWindow()
+	scrolled.SetChild(box)
+	scrolled.SetVExpand(true)
+	return scrolled
+}
+
+func (s *PlatformSelectionScreen) runGlobalSearch(query string, router *desktop.Router) {
+	cm := cache.GetCacheManager()
+	lq := strings.ToLower(query)
+
+	// Collections: filter in Go
+	allCollections, _ := cm.GetCollections()
+	var matchedCollections []romm.Collection
+	for _, c := range allCollections {
+		if strings.Contains(strings.ToLower(c.Name), lq) {
+			matchedCollections = append(matchedCollections, c)
+			if len(matchedCollections) >= 20 {
+				break
+			}
+		}
+	}
+
+	// Games: SQL LIKE search across all platforms
+	games, _ := cm.GetFilteredGames(cache.GameFilter{NameSearch: query, Limit: 50})
+
+	glib.IdleAdd(func() {
+		// Clear collections box
+		for child := s.collectionsBox.FirstChild(); child != nil; child = s.collectionsBox.FirstChild() {
+			s.collectionsBox.Remove(child)
+		}
+		for _, c := range matchedCollections {
+			c := c
+			row := adw.NewActionRow()
+			row.SetTitle(desktop.EscapeMarkup(c.Name))
+			row.SetSubtitle(fmt.Sprintf("%d games", c.ROMCount))
+			row.SetActivatable(true)
+			row.ConnectActivated(func() {
+				router.Navigate(NewCollectionGameListScreen(router, c))
+			})
+			s.collectionsBox.Append(row)
+		}
+		if len(matchedCollections) == 0 {
+			row := gtk.NewListBoxRow()
+			lbl := gtk.NewLabel("No collections found")
+			lbl.SetMarginTop(8)
+			lbl.SetMarginBottom(8)
+			row.SetChild(lbl)
+			s.collectionsBox.Append(row)
+		}
+
+		// Clear games box
+		for child := s.gamesBox.FirstChild(); child != nil; child = s.gamesBox.FirstChild() {
+			s.gamesBox.Remove(child)
+		}
+		for _, g := range games {
+			g := g
+			row := adw.NewActionRow()
+			row.SetTitle(desktop.EscapeMarkup(g.Name))
+			row.SetSubtitle(desktop.EscapeMarkup(g.PlatformDisplayName))
+			row.SetActivatable(true)
+			row.ConnectActivated(func() {
+				router.Navigate(NewGameDetailsScreen(router, g))
+			})
+			s.gamesBox.Append(row)
+		}
+		if len(games) == 0 {
+			row := gtk.NewListBoxRow()
+			lbl := gtk.NewLabel("No games found")
+			lbl.SetMarginTop(8)
+			lbl.SetMarginBottom(8)
+			row.SetChild(lbl)
+			s.gamesBox.Append(row)
+		}
+	})
 }

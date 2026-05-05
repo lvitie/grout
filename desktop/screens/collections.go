@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"grout/cache"
 	"grout/desktop"
+	"grout/desktop/widgets"
 	"grout/internal"
 	"grout/romm"
+	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -172,40 +174,7 @@ func (s *CollectionsScreen) Refresh() {
 	// Add cells to grid
 	if s.flowBox != nil {
 		for _, c := range s.collections {
-			cell := gtk.NewBox(gtk.OrientationVertical, 6)
-			cell.SetSizeRequest(150, 200)
-			cell.SetHAlign(gtk.AlignCenter)
-			cell.SetVAlign(gtk.AlignStart)
-			cell.SetHExpand(false)
-			cell.SetVExpand(false)
-
-			img := gtk.NewImage()
-			img.SetPixelSize(128)
-
-			// Determine icon based on collection type
-			if c.IsVirtual {
-				img.SetFromIconName("folder-open-symbolic")
-			} else if c.IsSmart {
-				img.SetFromIconName("system-search-symbolic")
-			} else {
-				img.SetFromIconName("folder-documents-symbolic")
-			}
-
-			// Try to load cover image if available
-			if host != nil {
-				if coverURL := c.GetCoverLargeURL(*host); coverURL != "" {
-					desktop.LoadImageAsync(img, coverURL, 128)
-				}
-			}
-
-			cell.Append(img)
-
-			label := gtk.NewLabel(desktop.EscapeMarkup(c.Name))
-			label.SetWrap(true)
-			label.SetMaxWidthChars(15)
-			label.SetJustify(gtk.JustifyCenter)
-			cell.Append(label)
-
+			cell := widgets.NewCollectionGridCellWithCover(c, host)
 			s.flowBox.Append(cell)
 		}
 	}
@@ -219,4 +188,31 @@ func (s *CollectionsScreen) ShowGridView() {
 
 func (s *CollectionsScreen) ShowListView() {
 	s.stack.SetVisibleChildName("list")
+}
+
+func (s *CollectionsScreen) FilterBy(query string) {
+	text := strings.ToLower(query)
+	s.listBox.SetFilterFunc(func(row *gtk.ListBoxRow) bool {
+		if text == "" {
+			return true
+		}
+		if ar, ok := row.Child().(*adw.ActionRow); ok {
+			return strings.Contains(strings.ToLower(ar.Title()), text)
+		}
+		return true
+	})
+	s.listBox.InvalidateFilter()
+
+	if s.flowBox != nil {
+		s.flowBox.SetFilterFunc(func(child *gtk.FlowBoxChild) bool {
+			if text == "" {
+				return true
+			}
+			if cell, ok := child.Child().(*widgets.CollectionGridCell); ok {
+				return strings.Contains(strings.ToLower(cell.GetCollection().Name), text)
+			}
+			return true
+		})
+		s.flowBox.InvalidateFilter()
+	}
 }
