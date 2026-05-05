@@ -6,10 +6,18 @@ import (
 	"sync"
 )
 
+type ViewMode bool
+
+const (
+	ViewModeList ViewMode = false
+	ViewModeGrid ViewMode = true
+)
+
 type AppState struct {
-	mu     sync.RWMutex
-	config *internal.Config
-	host   *romm.Host
+	mu       sync.RWMutex
+	config   *internal.Config
+	host     *romm.Host
+	viewMode ViewMode
 
 	// Listeners for state changes
 	listeners []func()
@@ -63,4 +71,17 @@ func (s *AppState) notify() {
 	for _, l := range s.listeners {
 		l()
 	}
+}
+
+func (s *AppState) GetViewMode() ViewMode {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.viewMode
+}
+
+func (s *AppState) SetViewMode(v ViewMode) {
+	s.mu.Lock()
+	s.viewMode = v
+	s.mu.Unlock()
+	s.notify()
 }
