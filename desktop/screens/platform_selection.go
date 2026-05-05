@@ -27,10 +27,11 @@ type PlatformSelectionScreen struct {
 	statusText *atomic.String
 
 	// UI elements that need updating
-	stack             *adw.ViewStack
-	progressBar       *gtk.ProgressBar
-	listBox           *gtk.ListBox
-	collectionsScreen *CollectionsScreen
+	stack              *adw.ViewStack
+	progressBar        *gtk.ProgressBar
+	listBox            *gtk.ListBox
+	platformListStack  *gtk.Stack
+	collectionsScreen  *CollectionsScreen
 }
 
 func NewPlatformSelectionScreen(router *desktop.Router) *PlatformSelectionScreen {
@@ -73,8 +74,65 @@ func (s *PlatformSelectionScreen) Build(router *desktop.Router) gtk.Widgetter {
 	switcherTitle.SetStack(s.stack)
 	switcherTitle.SetTitle("Grout")
 
+	// Search bar
+	searchBar := gtk.NewSearchEntry()
+	searchBar.SetPlaceholderText("Search...")
+
+	s.listBox.SetFilterFunc(func(row *gtk.ListBoxRow) bool {
+		text := strings.ToLower(searchBar.Text())
+		if text == "" {
+			return true
+		}
+		if actionRow, ok := row.Child().(*adw.ActionRow); ok {
+			title := strings.ToLower(actionRow.Title())
+			return strings.Contains(title, text)
+		}
+		return true
+	})
+
+	searchBar.ConnectChanged(func() {
+		s.listBox.InvalidateFilter()
+	})
+
+	// Toggle view button
+	isGridView := router.State().GetViewMode() == desktop.ViewModeGrid
+	iconName := "view-grid-symbolic"
+	if isGridView {
+		iconName = "view-list-symbolic"
+	}
+
+	toggleBtn := gtk.NewButtonFromIconName(iconName)
+	toggleBtn.SetTooltipText("Toggle grid/list view")
+
+	toggleBtn.ConnectClicked(func() {
+		isGridView = !isGridView
+		if isGridView {
+			s.platformListStack.SetVisibleChildName("grid")
+			if s.collectionsScreen != nil {
+				s.collectionsScreen.ShowGridView()
+			}
+			router.State().SetViewMode(desktop.ViewModeGrid)
+			toggleBtn.SetIconName("view-list-symbolic")
+		} else {
+			s.platformListStack.SetVisibleChildName("list")
+			if s.collectionsScreen != nil {
+				s.collectionsScreen.ShowListView()
+			}
+			router.State().SetViewMode(desktop.ViewModeList)
+			toggleBtn.SetIconName("view-grid-symbolic")
+		}
+	})
+
+	headerBox := gtk.NewBox(gtk.OrientationHorizontal, 6)
+	headerBox.SetMarginStart(6)
+	headerBox.SetMarginEnd(6)
+	headerBox.Append(searchBar)
+	headerBox.SetHExpand(true)
+	headerBox.Append(toggleBtn)
+
 	header := adw.NewHeaderBar()
 	header.SetTitleWidget(switcherTitle)
+	header.PackStart(headerBox)
 
 	syncBtn := gtk.NewButtonFromIconName("view-refresh-symbolic")
 	syncBtn.ConnectClicked(func() {
@@ -111,17 +169,68 @@ func (s *PlatformSelectionScreen) buildListView(router *desktop.Router) gtk.Widg
 		}
 	})
 
-	scrolled := gtk.NewScrolledWindow()
-	scrolled.SetChild(s.listBox)
-	scrolled.SetVExpand(true)
-	scrolled.SetHExpand(true)
+	listScrolled := gtk.NewScrolledWindow()
+	listScrolled.SetChild(s.listBox)
+	listScrolled.SetVExpand(true)
+	listScrolled.SetHExpand(true)
+
+	// Grid view for platforms
+	flowBox := gtk.NewFlowBox()
+	flowBox.SetSelectionMode(gtk.SelectionSingle)
+	flowBox.SetMinChildrenPerLine(2)
+	flowBox.SetMaxChildrenPerLine(10)
+	flowBox.SetRowSpacing(12)
+	flowBox.SetColumnSpacing(12)
+	flowBox.SetMarginStart(12)
+	flowBox.SetMarginEnd(12)
+	flowBox.SetMarginTop(12)
+	flowBox.SetMarginBottom(12)
+
+	for _, p := range s.platforms {
+		cell := gtk.NewBox(gtk.OrientationVertical, 6)
+		cell.SetSizeRequest(150, -1)
+
+		label := gtk.NewLabel(desktop.EscapeMarkup(p.Name))
+		label.SetWrap(true)
+		label.SetMaxWidthChars(15)
+		label.SetJustify(gtk.JustifyCenter)
+		cell.Append(label)
+
+		flowBox.Append(cell)
+	}
+
+	flowBox.ConnectChildActivated(func(child *gtk.FlowBoxChild) {
+		for idx, p := range s.platforms {
+			if flowBox.ChildAtIndex(idx) == child {
+				router.Navigate(NewGameListScreen(router, p))
+				break
+			}
+		}
+	})
+
+	gridScrolled := gtk.NewScrolledWindow()
+	gridScrolled.SetChild(flowBox)
+	gridScrolled.SetVExpand(true)
+	gridScrolled.SetHExpand(true)
+
+	// Stack to hold list and grid views
+	s.platformListStack = gtk.NewStack()
+	s.platformListStack.AddNamed(listScrolled, "list")
+	s.platformListStack.AddNamed(gridScrolled, "grid")
+
+	// Set initial view
+	if router.State().GetViewMode() == desktop.ViewModeGrid {
+		s.platformListStack.SetVisibleChildName("grid")
+	} else {
+		s.platformListStack.SetVisibleChildName("list")
+	}
 
 	s.progressBar = gtk.NewProgressBar()
 	s.progressBar.SetVisible(false)
 
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	box.Append(s.progressBar)
-	box.Append(scrolled)
+	box.Append(s.platformListStack)
 
 	return box
 }
