@@ -186,7 +186,8 @@ func (s *PlatformSelectionScreen) buildListView(router *desktop.Router) gtk.Widg
 	flowBox.SetMarginTop(12)
 	flowBox.SetMarginBottom(12)
 
-	for _, p := range s.platforms {
+	gridPlatforms := s.platforms // Keep reference for click handling
+	for _, p := range gridPlatforms {
 		cell := gtk.NewBox(gtk.OrientationVertical, 6)
 		cell.SetSizeRequest(150, 200)
 		cell.SetHAlign(gtk.AlignCenter)
@@ -209,12 +210,12 @@ func (s *PlatformSelectionScreen) buildListView(router *desktop.Router) gtk.Widg
 		loadPlatformIconAsync(p, img)
 	}
 
+	// Handle selection changes
 	flowBox.ConnectChildActivated(func(child *gtk.FlowBoxChild) {
-		for idx, p := range s.platforms {
-			if flowBox.ChildAtIndex(idx) == child {
-				router.Navigate(NewGameListScreen(router, p))
-				break
-			}
+		idx := child.Index()
+		if idx >= 0 && idx < len(gridPlatforms) {
+			p := gridPlatforms[idx]
+			router.Navigate(NewGameListScreen(router, p))
 		}
 	})
 

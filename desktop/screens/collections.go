@@ -68,12 +68,12 @@ func (s *CollectionsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	s.flowBox.SetMarginTop(12)
 	s.flowBox.SetMarginBottom(12)
 
+	// Handle selection changes
 	s.flowBox.ConnectChildActivated(func(child *gtk.FlowBoxChild) {
-		for idx, c := range s.collections {
-			if s.flowBox.ChildAtIndex(idx) == child {
-				router.Navigate(NewCollectionGameListScreen(router, c))
-				break
-			}
+		idx := child.Index()
+		if idx >= 0 && idx < len(s.collections) {
+			c := s.collections[idx]
+			router.Navigate(NewCollectionGameListScreen(router, c))
 		}
 	})
 

@@ -99,7 +99,8 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 	flowBox.SetMarginTop(12)
 	flowBox.SetMarginBottom(12)
 
-	for _, g := range s.games {
+	gridGames := s.games // Keep reference for click handling
+	for _, g := range gridGames {
 		cell := widgets.NewGameGridCellWithArt(g, host)
 		flowBox.Append(cell)
 	}
@@ -117,9 +118,11 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 		return false
 	})
 
+	// Handle selection changes
 	flowBox.ConnectChildActivated(func(child *gtk.FlowBoxChild) {
-		if cell, ok := child.Child().(*widgets.GameGridCell); ok {
-			game := cell.GetGame()
+		idx := child.Index()
+		if idx >= 0 && idx < len(gridGames) {
+			game := gridGames[idx]
 			internal.GetLogger().Info("Opening game details", "id", game.ID, "name", game.Name)
 			router.Navigate(NewGameDetailsScreen(router, game))
 		}
