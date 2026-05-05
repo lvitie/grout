@@ -29,12 +29,16 @@ func NewGameGridCell(game romm.Rom) *GameGridCell {
 	label.SetVExpand(false)
 
 	box := gtk.NewBox(gtk.OrientationVertical, 6)
-	box.SetSizeRequest(150, -1)
+	box.SetSizeRequest(150, 180)
 	box.SetHomogeneous(false)
 	box.SetHAlign(gtk.AlignCenter)
 	box.SetVAlign(gtk.AlignStart)
 	box.SetHExpand(false)
 	box.SetVExpand(false)
+
+	img.SetVAlign(gtk.AlignStart)
+	img.SetHAlign(gtk.AlignCenter)
+
 	box.Append(img)
 	box.Append(label)
 
