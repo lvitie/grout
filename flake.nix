@@ -22,14 +22,15 @@
         pkgs = nixpkgs.legacyPackages.${system};
       in
       {
-        # Minimal package: builds grout using the dev environment approach
-        packages.default = pkgs.stdenv.mkDerivation {
+        # Standard Go package build
+        packages.default = pkgs.buildGoModule {
           pname = "grout";
           version = (builtins.fromJSON (builtins.readFile ./pak.json)).version;
           src = ./.;
 
+          vendorHash = "sha256-9PW3lf9knNVJEgroAvoueei92Y0RAxtrEjBPifdD1yc=";
+
           nativeBuildInputs = with pkgs; [
-            go_1_25
             pkg-config
           ];
 
@@ -39,14 +40,17 @@
             gobject-introspection
           ];
 
-          buildPhase = ''
-            export HOME=$TMP
-            go build -o grout ./cmd/grout-desktop
-          '';
+          subPackages = [ "cmd/grout-desktop" ];
 
-          installPhase = ''
-            mkdir -p $out/bin
-            cp grout $out/bin/
+          # Handle CGo and GTK4 dependencies
+          CGO_CFLAGS = "-Wno-builtin-declaration-mismatch";
+
+          postInstall = ''
+            mv $out/bin/grout-desktop $out/bin/grout
+            mkdir -p $out/share/applications
+            mkdir -p $out/share/icons/hicolor/512x512/apps
+            cp resources/app.romm.Grout.desktop $out/share/applications/app.romm.Grout.desktop
+            cp resources/app.romm.Grout.png $out/share/icons/hicolor/512x512/apps/app.romm.Grout.png
           '';
 
           meta = with pkgs.lib; {
@@ -81,6 +85,9 @@
             gobject-introspection
             libx11
             libxxf86vm
+
+            # Flatpak building
+            flatpak-builder
 
             # Helpful tools
             git

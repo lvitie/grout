@@ -7,6 +7,9 @@ This file provides guidance to agents when working with code in this repository.
 - `nix develop` - Enter development shell with all dependencies (required before running any Go commands)
 - `nix build` - Build the grout binary (local build)
 - `nix run` - Run grout directly
+- `task flatpak:build` - Build Flatpak (automates vendoring)
+- `task flatpak:install` - Build and install Flatpak
+- `task flatpak:run` - Run installed Flatpak
 - `task code:lint` - Run go fmt, go vet, staticcheck
 - `go test ./...` - Run all tests
 - `go test ./sync -v` - Run tests in sync package with verbose output

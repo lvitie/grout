@@ -1,0 +1,29 @@
+version: '3'
+
+tasks:
+  vendor:
+    desc: Vendor Go modules for Flatpak build
+    cmds:
+      - go mod vendor
+    sources:
+      - go.mod
+      - go.sum
+    generates:
+      - vendor/
+
+  build:
+    desc: Build Flatpak locally
+    deps: [vendor]
+    cmds:
+      - flatpak-builder --force-clean build-dir app.romm.Grout.yaml
+
+  install:
+    desc: Build and install Flatpak locally
+    deps: [vendor]
+    cmds:
+      - flatpak-builder --user --install --force-clean build-dir app.romm.Grout.yaml
+
+  run:
+    desc: Run the installed Flatpak
+    cmds:
+      - flatpak run app.romm.Grout

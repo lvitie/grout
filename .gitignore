@@ -12,9 +12,13 @@ build/
 buildx86/
 dist/
 *.log
+.flatpak-builder/
+build-dir/
 build-miyoo/
 grout
 app/app
+result
+vendor/
 es_restart_request
 /save-sync-preview
 

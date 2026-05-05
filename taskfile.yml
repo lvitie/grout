@@ -9,6 +9,7 @@ includes:
   i18n: ./taskfiles/i18n.yml
   media: ./taskfiles/media.yml
   package: ./taskfiles/package.yml
+  flatpak: ./taskfiles/flatpak.yml
 
 vars:
   IMAGE_NAME: grout-build

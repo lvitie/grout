@@ -1,6 +1,6 @@
 app-id: app.romm.Grout
 runtime: org.gnome.Platform
-runtime-version: '47'
+runtime-version: '49'
 sdk: org.gnome.Sdk
 command: grout-desktop
 
@@ -15,19 +15,31 @@ finish-args:
   - --filesystem=xdg-cache/grout:create   # Cache/DB
   - --filesystem=xdg-config/grout:create  # Config
 
-sdk-extensions:
-  - org.freedesktop.Sdk.Extension.golang
-
 build-options:
-  append-path: /usr/lib/sdk/golang/bin
+  append-path: /usr/lib/sdk/golang/bin:/app/lib/go/bin
   env:
+    GOROOT: /app/lib/go
     GOPATH: /run/build/grout/.go
+    GOPROXY: off
+    GOTOOLCHAIN: local
 
 modules:
+  - name: golang
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/lib/go
+      - cp -R . /app/lib/go
+    sources:
+      - type: archive
+        url: https://go.dev/dl/go1.25.6.linux-amd64.tar.gz
+        sha256: f022b6aad78e362bcba9b0b94d09ad58c5a70c6ba3b7582905fababf5fe0181a
+    cleanup:
+      - /lib/go
+
   - name: grout
     buildsystem: simple
     build-commands:
-      - go build -o /app/bin/grout-desktop ./cmd/grout-desktop
+      - go build -mod=vendor -o /app/bin/grout-desktop ./cmd/grout-desktop
       - install -Dm644 resources/app.romm.Grout.desktop /app/share/applications/app.romm.Grout.desktop
       - install -Dm644 resources/app.romm.Grout.png /app/share/icons/hicolor/512x512/apps/app.romm.Grout.png
     sources:
