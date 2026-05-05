@@ -172,10 +172,16 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 		}
 	})
 
+	headerBox := gtk.NewBox(gtk.OrientationHorizontal, 6)
+	headerBox.SetMarginStart(6)
+	headerBox.SetMarginEnd(6)
+	headerBox.Append(searchBar)
+	headerBox.SetHExpand(true)
+	headerBox.Append(toggleBtn)
+
 	header := adw.NewHeaderBar()
 	header.SetTitleWidget(adw.NewWindowTitle(desktop.EscapeMarkup(s.title), ""))
-	header.PackStart(searchBar)
-	header.PackEnd(toggleBtn)
+	header.PackStart(headerBox)
 
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	box.Append(header)
