@@ -21,6 +21,9 @@ type AppState struct {
 
 	// Listeners for state changes
 	listeners []func()
+
+	// Listeners for installed games changes
+	installedListeners []func()
 }
 
 func NewAppState() *AppState {
@@ -84,4 +87,18 @@ func (s *AppState) SetViewMode(v ViewMode) {
 	s.viewMode = v
 	s.mu.Unlock()
 	s.notify()
+}
+
+func (s *AppState) AddInstalledListener(l func()) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.installedListeners = append(s.installedListeners, l)
+}
+
+func (s *AppState) NotifyInstalledChanged() {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, l := range s.installedListeners {
+		l()
+	}
 }

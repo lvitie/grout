@@ -33,6 +33,7 @@ type PlatformSelectionScreen struct {
 	listBox            *gtk.ListBox
 	platformListStack  *gtk.Stack
 	collectionsScreen  *CollectionsScreen
+	installedScreen    *InstalledScreen
 	collectionsBox     *gtk.ListBox
 	gamesBox           *gtk.ListBox
 }
@@ -55,14 +56,22 @@ func (s *PlatformSelectionScreen) Build(router *desktop.Router) gtk.Widgetter {
 
 	// Platform List View
 	listView := s.buildListView(router)
-	s.stack.AddTitled(listView, "platforms", "Platforms")
+	platformsPage := s.stack.AddTitled(listView, "platforms", "Platforms")
+	platformsPage.SetIconName("application-x-executable-symbolic")
 
 	// Collections View
 	s.collectionsScreen = NewCollectionsScreen(router)
 	collectionsView := s.collectionsScreen.Build(router)
-	s.stack.AddTitled(collectionsView, "collections", "Collections")
+	collectionsPage := s.stack.AddTitled(collectionsView, "collections", "Collections")
+	collectionsPage.SetIconName("folder-documents-symbolic")
 
-	// We'll wire the search bar to collections after creating it
+	// Installed View
+	s.installedScreen = NewInstalledScreen(router)
+	installedView := s.installedScreen.Build(router)
+	installedPage := s.stack.AddTitled(installedView, "installed", "Installed")
+	installedPage.SetIconName("drive-harddisk-symbolic")
+
+	// We'll wire the search bar to collections and installed after creating it
 
 	// Sync View
 	syncView := s.buildSyncView(router)
@@ -100,15 +109,17 @@ func (s *PlatformSelectionScreen) Build(router *desktop.Router) gtk.Widgetter {
 	searchBar := gtk.NewSearchEntry()
 	searchBar.SetPlaceholderText("Search...")
 
-	// Wire search to collections screen
+	// Wire search to collections and installed screens
 	s.collectionsScreen.SetSearchQuery(searchBar)
+	s.installedScreen.SetSearchQuery(searchBar)
 
 	searchBar.ConnectChanged(func() {
 		query := strings.TrimSpace(searchBar.Text())
 		activeTab := s.stack.VisibleChildName()
 
-		// Always invalidate collections filters
+		// Always invalidate collections and installed filters
 		s.collectionsScreen.InvalidateCollectionFilters()
+		s.installedScreen.InvalidateFilters()
 
 		if query == "" {
 			s.outerStack.SetVisibleChildName("main")
@@ -120,6 +131,8 @@ func (s *PlatformSelectionScreen) Build(router *desktop.Router) gtk.Widgetter {
 			s.outerStack.SetVisibleChildName("search")
 			go s.runGlobalSearch(query, router)
 		case "collections":
+			s.outerStack.SetVisibleChildName("main")
+		case "installed":
 			s.outerStack.SetVisibleChildName("main")
 		}
 	})
@@ -141,12 +154,18 @@ func (s *PlatformSelectionScreen) Build(router *desktop.Router) gtk.Widgetter {
 			if s.collectionsScreen != nil {
 				s.collectionsScreen.ShowGridView()
 			}
+			if s.installedScreen != nil {
+				s.installedScreen.ShowGridView()
+			}
 			router.State().SetViewMode(desktop.ViewModeGrid)
 			toggleBtn.SetIconName("view-list-symbolic")
 		} else {
 			s.platformListStack.SetVisibleChildName("list")
 			if s.collectionsScreen != nil {
 				s.collectionsScreen.ShowListView()
+			}
+			if s.installedScreen != nil {
+				s.installedScreen.ShowListView()
 			}
 			router.State().SetViewMode(desktop.ViewModeList)
 			toggleBtn.SetIconName("view-grid-symbolic")
@@ -163,6 +182,13 @@ func (s *PlatformSelectionScreen) Build(router *desktop.Router) gtk.Widgetter {
 	header := adw.NewHeaderBar()
 	header.SetTitleWidget(switcherTitle)
 	header.PackStart(headerBox)
+
+	queueBtn := gtk.NewButtonFromIconName("folder-download-symbolic")
+	queueBtn.SetTooltipText("Download queue")
+	queueBtn.ConnectClicked(func() {
+		router.Navigate(NewDownloadQueueScreen(router))
+	})
+	header.PackEnd(queueBtn)
 
 	syncBtn := gtk.NewButtonFromIconName("view-refresh-symbolic")
 	syncBtn.ConnectClicked(func() {
@@ -402,6 +428,10 @@ func (s *PlatformSelectionScreen) refreshPlatformList() {
 		s.collectionsScreen.Refresh()
 	}
 
+	if s.installedScreen != nil {
+		s.installedScreen.Refresh()
+	}
+
 	// Clear list
 	for {
 		row := s.listBox.FirstChild()
@@ -424,274 +454,7 @@ func (s *PlatformSelectionScreen) refreshPlatformList() {
 		iconImg.SetMarginEnd(12)
 		row.AddPrefix(iconImg)
 
-		// Try to load icon from embedded resources
-		logoFilename := ""
-		if p.LogoPath != "" {
-			logoFilename = strings.TrimSuffix(filepath.Base(p.LogoPath), filepath.Ext(p.LogoPath))
-		}
-
-		// Helper to normalize strings for better matching (e.g. "Atari 2600" -> "atari2600")
-		normalize := func(s string) string {
-			return strings.Map(func(r rune) rune {
-				if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
-					return r
-				}
-				if r >= 'A' && r <= 'Z' {
-					return r + ('a' - 'A')
-				}
-				return -1
-			}, s)
-		}
-
-		// Helper to slugify (e.g. "Atari Jaguar CD" -> "atari-jaguar-cd")
-		slugify := func(s string) string {
-			return strings.ToLower(strings.Join(strings.Fields(s), "-"))
-		}
-
-		// Common platform aliases lookup table
-		type aliasRule struct {
-			contains string
-			aliases  []string
-		}
-		rules := []aliasRule{
-			// Sony
-			{"playstation 5", []string{"ps5"}},
-			{"playstation 4", []string{"ps4"}},
-			{"playstation 3", []string{"ps3"}},
-			{"playstation 2", []string{"ps2"}},
-			{"playstation portable", []string{"psp"}},
-			{"playstation vita", []string{"psvita"}},
-			{"playstation", []string{"psx", "ps1", "ps"}},
-
-			// Nintendo
-			{"nintendo 3ds", []string{"3ds"}},
-			{"nintendo ds", []string{"nds"}},
-			{"nintendo 64", []string{"n64"}},
-			{"game boy advance", []string{"gba"}},
-			{"game boy color", []string{"gbc"}},
-			{"game boy", []string{"gb"}},
-			{"gamecube", []string{"ngc", "gc"}},
-			{"wii u", []string{"wiiu"}},
-			{"wii", []string{"wii"}},
-			{"switch", []string{"switch"}},
-			{"virtual boy", []string{"vb", "virtualboy"}},
-			{"super nintendo", []string{"snes"}},
-			{"snes", []string{"snes"}},
-			{"famicom disk system", []string{"fds"}},
-			{"famicom", []string{"famicom", "nes", "sfam"}},
-			{"super famicom", []string{"sfam", "sfc"}},
-			{"nintendo entertainment system", []string{"nes"}},
-
-			// Sega
-			{"dreamcast", []string{"dc", "dreamcast"}},
-			{"saturn", []string{"saturn"}},
-			{"mega drive", []string{"genesis", "megadrive", "md"}},
-			{"genesis", []string{"genesis", "megadrive", "md"}},
-			{"master system", []string{"sms", "ms"}},
-			{"game gear", []string{"gamegear", "gg"}},
-			{"sega cd", []string{"segacd", "scd"}},
-			{"sega 32x", []string{"32x"}},
-			{"sg-1000", []string{"sg1000"}},
-
-			// Microsoft
-			{"xbox series x", []string{"series-x"}},
-			{"xbox series s", []string{"series-s"}},
-			{"xbox one", []string{"xboxone"}},
-			{"xbox 360", []string{"xbox360"}},
-			{"xbox", []string{"xbox"}},
-			{"ms-dos", []string{"dos"}},
-			{"dos", []string{"dos"}},
-
-			// Atari
-			{"atari 2600", []string{"atari2600", "atari-2600"}},
-			{"atari 5200", []string{"atari5200", "atari-5200"}},
-			{"atari 7800", []string{"atari7800", "atari-7800"}},
-			{"atari 800", []string{"atari800", "atari-800"}},
-			{"atari lynx", []string{"lynx", "atarilynx"}},
-			{"atari jaguar cd", []string{"atari-jaguar-cd"}},
-			{"atari jaguar", []string{"jaguar", "atarijaguar"}},
-
-			// Commodore
-			{"commodore 64", []string{"c64", "commodore-64"}},
-			{"amiga cd32", []string{"amiga-cd32"}},
-			{"amiga", []string{"amiga"}},
-
-			// Others
-			{"arcade", []string{"arcade", "fbneo", "mame"}},
-			{"3do", []string{"3do"}},
-			{"neo geo aes", []string{"neogeoaes"}},
-			{"neo geo mvs", []string{"neogeomvs"}},
-			{"neo geo cd", []string{"neo-geo-cd", "neocd"}},
-			{"neo geo pocket color", []string{"neo-geo-pocket-color"}},
-			{"neo geo pocket", []string{"neo-geo-pocket"}},
-			{"neo geo x", []string{"neo-geo-x"}},
-			{"neo geo", []string{"neogeoaes", "neogeomvs", "neo-geo-x", "neogeo"}},
-			{"pc engine", []string{"pce", "pcengine"}},
-			{"turbografx", []string{"tg16", "turbografx"}},
-			{"wonderswan color", []string{"wonderswan-color"}},
-			{"wonderswan", []string{"wonderswan"}},
-			{"colecovision", []string{"colecovision"}},
-			{"intellivision", []string{"intellivision"}},
-			{"supergrafx", []string{"supergrafx", "sgfx"}},
-		}
-
-		aliases := []string{}
-		lowerName := strings.ToLower(p.Name)
-		for _, rule := range rules {
-			if strings.Contains(lowerName, rule.contains) {
-				aliases = append(aliases, rule.aliases...)
-				break // Use the first matching rule (most specific should be first)
-			}
-		}
-
-		// Build comprehensive candidate list with many variations
-		candidateSet := make(map[string]bool) // Deduplicate
-		addCandidate := func(s string) {
-			if s != "" {
-				candidateSet[s] = true
-			}
-		}
-
-		// Primary candidates
-		addCandidate(logoFilename)
-		addCandidate(p.ShortName)
-		addCandidate(p.Slug)
-		addCandidate(p.FSSlug)
-		addCandidate(p.Name)
-		addCandidate(p.ApiName)
-
-		// Normalized variations
-		addCandidate(normalize(p.Name))
-		addCandidate(normalize(p.ApiName))
-		addCandidate(normalize(p.ShortName))
-		addCandidate(normalize(p.Slug))
-		addCandidate(normalize(p.FSSlug))
-
-		// Slugified variations
-		addCandidate(slugify(p.Name))
-		addCandidate(slugify(p.ApiName))
-		addCandidate(slugify(p.ShortName))
-		addCandidate(slugify(p.Slug))
-		addCandidate(slugify(p.FSSlug))
-
-		// Space-to-hyphen variations
-		addCandidate(strings.ReplaceAll(p.Name, " ", "-"))
-		addCandidate(strings.ReplaceAll(p.ApiName, " ", "-"))
-		addCandidate(strings.ReplaceAll(p.ShortName, " ", "-"))
-
-		// Space-to-nothing variations
-		addCandidate(strings.ReplaceAll(p.Name, " ", ""))
-		addCandidate(strings.ReplaceAll(p.ApiName, " ", ""))
-		addCandidate(strings.ReplaceAll(p.ShortName, " ", ""))
-
-		// Lowercase direct
-		addCandidate(strings.ToLower(p.Name))
-		addCandidate(strings.ToLower(p.ApiName))
-		addCandidate(strings.ToLower(p.ShortName))
-
-		// Add aliases from rules
-		for _, a := range aliases {
-			addCandidate(a)
-		}
-
-		// Convert set to slice and add default
-		var candidatesArgs []string
-		for s := range candidateSet {
-			candidatesArgs = append(candidatesArgs, s)
-		}
-		candidatesArgs = append(candidatesArgs, "default")
-
-		candidates := resources.GetPlatformIconCandidates(candidatesArgs...)
-
-		// Helper to load and scale a pixbuf candidate
-		tryLoadIcon := func(c resources.IconCandidate) bool {
-			loader, err := gdkpixbuf.NewPixbufLoaderWithMIMEType(c.Mime)
-			if err != nil {
-				loader = gdkpixbuf.NewPixbufLoader()
-			}
-
-			if err := loader.Write(c.Data); err != nil {
-				loader.Close()
-				return false
-			}
-
-			if err := loader.Close(); err != nil {
-				return false
-			}
-
-			pixbuf := loader.Pixbuf()
-			if pixbuf == nil {
-				return false
-			}
-
-			scaled := pixbuf.ScaleSimple(32, 32, gdkpixbuf.InterpBilinear)
-			if scaled != nil {
-				iconImg.SetFromPixbuf(scaled)
-				return true
-			}
-			return false
-		}
-
-		iconLoaded := false
-		for _, c := range candidates {
-			if tryLoadIcon(c) {
-				iconLoaded = true
-				break
-			}
-		}
-
-		// Network fallback: try to load from RomM server if embedded fails
-		if !iconLoaded {
-			logoPath := p.LogoPath
-			if logoPath == "" && p.Slug != "" {
-				// Guess lowercase slugified path
-				logoPath = "/assets/platforms/" + strings.ToLower(p.Slug) + ".png"
-			}
-
-			if logoPath != "" {
-				host := s.router.State().GetHost()
-				if host != nil {
-					go func(p romm.Platform, img *gtk.Image, path string) {
-						client := romm.NewClientFromHost(*host)
-						data, err := client.GetAsset(path)
-						if err == nil {
-							glib.IdleAdd(func() {
-								loader := gdkpixbuf.NewPixbufLoader()
-								if err := loader.Write(data); err == nil {
-									loader.Close()
-									if pixbuf := loader.Pixbuf(); pixbuf != nil {
-										scaled := pixbuf.ScaleSimple(32, 32, gdkpixbuf.InterpBilinear)
-										if scaled != nil {
-											img.SetFromPixbuf(scaled)
-										}
-									}
-								}
-							})
-						} else {
-							// Try one more guess if the first one failed (.svg instead of .png)
-							if strings.HasSuffix(path, ".png") {
-								svgPath := strings.TrimSuffix(path, ".png") + ".svg"
-								data, err := client.GetAsset(svgPath)
-								if err == nil {
-									glib.IdleAdd(func() {
-										loader := gdkpixbuf.NewPixbufLoader()
-										if err := loader.Write(data); err == nil {
-											loader.Close()
-											if pixbuf := loader.Pixbuf(); pixbuf != nil {
-												scaled := pixbuf.ScaleSimple(32, 32, gdkpixbuf.InterpBilinear)
-												if scaled != nil {
-													img.SetFromPixbuf(scaled)
-												}
-											}
-										}
-									})
-								}
-							}
-						}
-					}(p, iconImg, logoPath)
-				}
-			}
-		}
+		loadPlatformListIconAsync(p, iconImg, 32, s.router)
 
 		s.listBox.Append(row)
 	}
@@ -774,6 +537,214 @@ func loadPlatformIconAsync(p romm.Platform, img *gtk.Image) {
 				return
 			}
 		}
+	}()
+}
+
+func loadPlatformListIconAsync(p romm.Platform, img *gtk.Image, size int, router *desktop.Router) {
+	go func() {
+		logoFilename := ""
+		if p.LogoPath != "" {
+			logoFilename = strings.TrimSuffix(filepath.Base(p.LogoPath), filepath.Ext(p.LogoPath))
+		}
+
+		normalize := func(s string) string {
+			return strings.Map(func(r rune) rune {
+				if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+					return r
+				}
+				if r >= 'A' && r <= 'Z' {
+					return r + ('a' - 'A')
+				}
+				return -1
+			}, s)
+		}
+
+		slugify := func(s string) string {
+			return strings.ToLower(strings.Join(strings.Fields(s), "-"))
+		}
+
+		type aliasRule struct {
+			contains string
+			aliases  []string
+		}
+		rules := []aliasRule{
+			{"playstation 5", []string{"ps5"}},
+			{"playstation 4", []string{"ps4"}},
+			{"playstation 3", []string{"ps3"}},
+			{"playstation 2", []string{"ps2"}},
+			{"playstation portable", []string{"psp"}},
+			{"playstation vita", []string{"psvita"}},
+			{"playstation", []string{"psx", "ps1", "ps"}},
+			{"nintendo 3ds", []string{"3ds"}},
+			{"nintendo ds", []string{"nds"}},
+			{"nintendo 64", []string{"n64"}},
+			{"game boy advance", []string{"gba"}},
+			{"game boy color", []string{"gbc"}},
+			{"game boy", []string{"gb"}},
+			{"gamecube", []string{"ngc", "gc"}},
+			{"wii u", []string{"wiiu"}},
+			{"wii", []string{"wii"}},
+			{"switch", []string{"switch"}},
+			{"virtual boy", []string{"vb", "virtualboy"}},
+			{"super nintendo", []string{"snes"}},
+			{"snes", []string{"snes"}},
+			{"famicom disk system", []string{"fds"}},
+			{"famicom", []string{"famicom", "nes", "sfam"}},
+			{"super famicom", []string{"sfam", "sfc"}},
+			{"nintendo entertainment system", []string{"nes"}},
+			{"dreamcast", []string{"dc", "dreamcast"}},
+			{"saturn", []string{"saturn"}},
+			{"mega drive", []string{"genesis", "megadrive", "md"}},
+			{"genesis", []string{"genesis", "megadrive", "md"}},
+			{"master system", []string{"sms", "ms"}},
+			{"game gear", []string{"gamegear", "gg"}},
+			{"sega cd", []string{"segacd", "scd"}},
+			{"sega 32x", []string{"32x"}},
+			{"sg-1000", []string{"sg1000"}},
+			{"xbox series x", []string{"series-x"}},
+			{"xbox series s", []string{"series-s"}},
+			{"xbox one", []string{"xboxone"}},
+			{"xbox 360", []string{"xbox360"}},
+			{"xbox", []string{"xbox"}},
+			{"ms-dos", []string{"dos"}},
+			{"dos", []string{"dos"}},
+			{"atari 2600", []string{"atari2600", "atari-2600"}},
+			{"atari 5200", []string{"atari5200", "atari-5200"}},
+			{"atari 7800", []string{"atari7800", "atari-7800"}},
+			{"atari 800", []string{"atari800", "atari-800"}},
+			{"atari lynx", []string{"lynx", "atarilynx"}},
+			{"atari jaguar cd", []string{"atari-jaguar-cd"}},
+			{"atari jaguar", []string{"jaguar", "atarijaguar"}},
+			{"commodore 64", []string{"c64", "commodore-64"}},
+			{"amiga cd32", []string{"amiga-cd32"}},
+			{"amiga", []string{"amiga"}},
+			{"arcade", []string{"arcade", "fbneo", "mame"}},
+			{"3do", []string{"3do"}},
+			{"neo geo aes", []string{"neogeoaes"}},
+			{"neo geo mvs", []string{"neogeomvs"}},
+			{"neo geo cd", []string{"neo-geo-cd", "neocd"}},
+			{"neo geo pocket color", []string{"neo-geo-pocket-color"}},
+			{"neo geo pocket", []string{"neo-geo-pocket"}},
+			{"neo geo x", []string{"neo-geo-x"}},
+			{"neo geo", []string{"neogeoaes", "neogeomvs", "neo-geo-x", "neogeo"}},
+			{"pc engine", []string{"pce", "pcengine"}},
+			{"turbografx", []string{"tg16", "turbografx"}},
+			{"wonderswan color", []string{"wonderswan-color"}},
+			{"wonderswan", []string{"wonderswan"}},
+			{"colecovision", []string{"colecovision"}},
+			{"intellivision", []string{"intellivision"}},
+			{"supergrafx", []string{"supergrafx", "sgfx"}},
+		}
+
+		var aliases []string
+		lowerName := strings.ToLower(p.Name)
+		for _, rule := range rules {
+			if strings.Contains(lowerName, rule.contains) {
+				aliases = append(aliases, rule.aliases...)
+				break
+			}
+		}
+
+		candidateSet := make(map[string]bool)
+		addCandidate := func(s string) {
+			if s != "" {
+				candidateSet[s] = true
+			}
+		}
+
+		addCandidate(logoFilename)
+		addCandidate(p.ShortName)
+		addCandidate(p.Slug)
+		addCandidate(p.FSSlug)
+		addCandidate(p.Name)
+		addCandidate(p.ApiName)
+		addCandidate(normalize(p.Name))
+		addCandidate(normalize(p.ApiName))
+		addCandidate(normalize(p.ShortName))
+		addCandidate(normalize(p.Slug))
+		addCandidate(normalize(p.FSSlug))
+		addCandidate(slugify(p.Name))
+		addCandidate(slugify(p.ApiName))
+		addCandidate(slugify(p.ShortName))
+		addCandidate(slugify(p.Slug))
+		addCandidate(slugify(p.FSSlug))
+		addCandidate(strings.ReplaceAll(p.Name, " ", "-"))
+		addCandidate(strings.ReplaceAll(p.ApiName, " ", "-"))
+		addCandidate(strings.ReplaceAll(p.ShortName, " ", "-"))
+		addCandidate(strings.ReplaceAll(p.Name, " ", ""))
+		addCandidate(strings.ReplaceAll(p.ApiName, " ", ""))
+		addCandidate(strings.ReplaceAll(p.ShortName, " ", ""))
+		addCandidate(strings.ToLower(p.Name))
+		addCandidate(strings.ToLower(p.ApiName))
+		addCandidate(strings.ToLower(p.ShortName))
+		for _, a := range aliases {
+			addCandidate(a)
+		}
+
+		var candidatesArgs []string
+		for s := range candidateSet {
+			candidatesArgs = append(candidatesArgs, s)
+		}
+		candidatesArgs = append(candidatesArgs, "default")
+
+		candidates := resources.GetPlatformIconCandidates(candidatesArgs...)
+
+		for _, c := range candidates {
+			loader, err := gdkpixbuf.NewPixbufLoaderWithMIMEType(c.Mime)
+			if err != nil {
+				loader = gdkpixbuf.NewPixbufLoader()
+			}
+			if err := loader.Write(c.Data); err != nil {
+				loader.Close()
+				continue
+			}
+			if err := loader.Close(); err != nil {
+				continue
+			}
+			pixbuf := loader.Pixbuf()
+			if pixbuf == nil {
+				continue
+			}
+			scaled := pixbuf.ScaleSimple(size, size, gdkpixbuf.InterpBilinear)
+			if scaled != nil {
+				glib.IdleAdd(func() {
+					img.SetFromPixbuf(scaled)
+				})
+				return
+			}
+		}
+
+		// Network fallback
+		logoPath := p.LogoPath
+		if logoPath == "" && p.Slug != "" {
+			logoPath = "/assets/platforms/" + strings.ToLower(p.Slug) + ".png"
+		}
+		if logoPath == "" {
+			return
+		}
+		host := router.State().GetHost()
+		if host == nil {
+			return
+		}
+		client := romm.NewClientFromHost(*host)
+		data, err := client.GetAsset(logoPath)
+		if err != nil && strings.HasSuffix(logoPath, ".png") {
+			data, err = client.GetAsset(strings.TrimSuffix(logoPath, ".png") + ".svg")
+		}
+		if err != nil {
+			return
+		}
+		glib.IdleAdd(func() {
+			loader := gdkpixbuf.NewPixbufLoader()
+			if err := loader.Write(data); err == nil {
+				loader.Close()
+				if pixbuf := loader.Pixbuf(); pixbuf != nil {
+					if scaled := pixbuf.ScaleSimple(size, size, gdkpixbuf.InterpBilinear); scaled != nil {
+						img.SetFromPixbuf(scaled)
+					}
+				}
+			}
+		})
 	}()
 }
 

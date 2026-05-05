@@ -183,6 +183,15 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 		}
 	})
 
+	downloadAllBtn := gtk.NewButtonFromIconName("folder-download-symbolic")
+	downloadAllBtn.SetTooltipText("Download all games")
+	downloadAllBtn.ConnectClicked(func() {
+		queue := desktop.GetDownloadQueue()
+		queue.SetHostAndConfig(router.State().GetHost(), router.State().GetConfig())
+		queue.Enqueue(s.games...)
+		router.Navigate(NewDownloadQueueScreen(router))
+	})
+
 	headerBox := gtk.NewBox(gtk.OrientationHorizontal, 6)
 	headerBox.SetMarginStart(6)
 	headerBox.SetMarginEnd(6)
@@ -193,6 +202,7 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 	header := adw.NewHeaderBar()
 	header.SetTitleWidget(adw.NewWindowTitle(desktop.EscapeMarkup(s.title), ""))
 	header.PackStart(headerBox)
+	header.PackEnd(downloadAllBtn)
 
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	box.Append(header)
