@@ -3,6 +3,7 @@ package cache
 import (
 	"database/sql"
 	"grout/internal/fileutil"
+	"grout/platform"
 	"grout/romm"
 	"os"
 	"path/filepath"
@@ -345,6 +346,19 @@ func (cm *Manager) HasCollections() bool {
 	return err == nil && count > 0
 }
 
+func (cm *Manager) HasPlatforms() bool {
+	if cm == nil || !cm.initialized {
+		return false
+	}
+
+	cm.mu.RLock()
+	defer cm.mu.RUnlock()
+
+	var count int
+	err := cm.db.QueryRow("SELECT COUNT(*) FROM platforms").Scan(&count)
+	return err == nil && count > 0
+}
+
 const (
 	MetaKeyPlatformsRefreshedAt   = "platforms_refreshed_at"
 	MetaKeyGamesRefreshedAt       = "games_refreshed_at"
@@ -453,27 +467,15 @@ func (cm *Manager) SyncPlatformGames(platforms []romm.Platform) (int, error) {
 }
 
 func getCacheDBPath() string {
-	wd, err := os.Getwd()
-	if err != nil {
-		return filepath.Join(os.TempDir(), ".cache", "grout.db")
-	}
-	return filepath.Join(wd, ".cache", "grout.db")
+	return filepath.Join(platform.GetCurrent().CacheDir(), "grout.db")
 }
 
 func GetArtworkCacheDir() string {
-	wd, err := os.Getwd()
-	if err != nil {
-		return filepath.Join(os.TempDir(), ".cache", "artwork")
-	}
-	return filepath.Join(wd, ".cache", "artwork")
+	return filepath.Join(platform.GetCurrent().CacheDir(), "artwork")
 }
 
 func GetCacheDir() string {
-	wd, err := os.Getwd()
-	if err != nil {
-		return filepath.Join(os.TempDir(), ".cache")
-	}
-	return filepath.Join(wd, ".cache")
+	return platform.GetCurrent().CacheDir()
 }
 
 // DeleteCacheFolder removes the entire cache directory and resets the singleton

@@ -141,7 +141,8 @@ func (s *PlatformSelectionScreen) buildSyncView(router *desktop.Router) gtk.Widg
 	// Start progress monitoring
 	s.startProgressMonitor(statusPage, progress)
 
-	if !s.syncing.Load() && len(s.platforms) == 0 {
+	cm := cache.GetCacheManager()
+	if !s.syncing.Load() && !cm.HasPlatforms() {
 		s.startSync(router)
 	}
 
