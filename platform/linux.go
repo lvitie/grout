@@ -40,6 +40,14 @@ func (l *LinuxDesktop) BaseSavePath() string {
 	return filepath.Join(l.dataDir, "saves")
 }
 
+func (l *LinuxDesktop) BIOSDirectory() string {
+	return filepath.Join(l.dataDir, "bios")
+}
+
+func (l *LinuxDesktop) GetBIOSFilePaths(relativePath, _ string) []string {
+	return []string{filepath.Join(l.BIOSDirectory(), relativePath)}
+}
+
 func (l *LinuxDesktop) GetSaveDirectory(fsSlug string) string {
 	return filepath.Join(l.BaseSavePath(), fsSlug)
 }

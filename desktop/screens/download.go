@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"grout/desktop"
 	"grout/romm"
+	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 
@@ -48,8 +50,10 @@ func (s *DownloadScreen) Build(router *desktop.Router) gtk.Widgetter {
 			return
 		}
 
+		slog.Info("Starting download", "gameID", s.game.ID, "gameName", s.game.Name, "host", host.URL())
+
 		client := romm.NewClientFromHost(*host)
-		data, err := client.DownloadRom(s.game.ID)
+		resp, err := client.DownloadRomStream(s.game)
 		if err != nil {
 			glib.IdleAdd(func() {
 				statusPage.SetDescription(fmt.Sprintf("Error: %v", err))
@@ -57,6 +61,9 @@ func (s *DownloadScreen) Build(router *desktop.Router) gtk.Widgetter {
 			})
 			return
 		}
+		defer resp.Body.Close()
+
+		totalSize := resp.ContentLength
 
 		// Determine target path
 		config := state.GetConfig()
@@ -73,11 +80,44 @@ func (s *DownloadScreen) Build(router *desktop.Router) gtk.Widgetter {
 			return
 		}
 
-		if err := os.WriteFile(targetPath, data, 0644); err != nil {
+		out, err := os.Create(targetPath)
+		if err != nil {
 			glib.IdleAdd(func() {
-				statusPage.SetDescription(fmt.Sprintf("Failed to write file: %v", err))
+				statusPage.SetDescription(fmt.Sprintf("Failed to create file: %v", err))
 			})
 			return
+		}
+		defer out.Close()
+
+		// Proxy the body with progress updates
+		var downloaded int64
+		buffer := make([]byte, 32*1024)
+		for {
+			n, err := resp.Body.Read(buffer)
+			if n > 0 {
+				if _, werr := out.Write(buffer[:n]); werr != nil {
+					glib.IdleAdd(func() {
+						statusPage.SetDescription(fmt.Sprintf("Failed to write file: %v", werr))
+					})
+					return
+				}
+				downloaded += int64(n)
+				if totalSize > 0 {
+					frac := float64(downloaded) / float64(totalSize)
+					glib.IdleAdd(func() {
+						progress.SetFraction(frac)
+					})
+				}
+			}
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				glib.IdleAdd(func() {
+					statusPage.SetDescription(fmt.Sprintf("Download failed: %v", err))
+				})
+				return
+			}
 		}
 
 		glib.IdleAdd(func() {

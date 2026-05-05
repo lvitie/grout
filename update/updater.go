@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"grout/cfw"
 	"grout/internal"
 	"grout/romm"
 	"grout/version"
@@ -16,7 +15,6 @@ import (
 	"runtime"
 	"strings"
 
-	internal "grout/internal"
 	"go.uber.org/atomic"
 )
 
@@ -30,48 +28,22 @@ type Info struct {
 	UpdateAvailable bool
 }
 
-// GetDistributionAssetName returns the distribution zip asset name for a given CFW and architecture.
-func GetDistributionAssetName(c cfw.CFW) string {
-	switch c {
-	case cfw.NextUI:
-		return "Grout.pak.zip"
-	case cfw.MuOS:
-		return "Grout.muxapp"
-	case cfw.Knulli:
-		return "Grout-Knulli.zip"
-	case cfw.Spruce:
-		return "Grout.spruce.zip"
-	case cfw.ROCKNIX:
-		return "Grout-ROCKNIX.zip"
-	case cfw.Trimui:
-		return "Grout-Trimui.zip"
-	case cfw.Allium:
-		return "Grout-Allium.zip"
-	case cfw.Onion:
-		return "Grout-Onion.zip"
-	case cfw.Koriki:
-		return "Grout-Koriki.zip"
-	case cfw.MinUI:
-		return "Grout-MinUI.zip"
-	case cfw.Batocera:
-		switch runtime.GOARCH {
-		case "arm64":
-			return "Grout-Batocera-arm64.zip"
-		case "amd64":
-			return "Grout-Batocera-amd64.zip"
-		case "386":
-			return "Grout-Batocera-x86.zip"
-		default:
-			return ""
-		}
+// GetDistributionAssetName returns the distribution asset name for Linux.
+func GetDistributionAssetName() string {
+	switch runtime.GOARCH {
+	case "arm64":
+		return "Grout-linux-arm64.zip"
+	case "amd64":
+		return "Grout-linux-amd64.zip"
 	default:
-		return ""
+		return "Grout-linux-amd64.zip"
 	}
 }
 
 // getInstallRoot returns the top-level install directory where the
 // distribution zip contents should be extracted.
-func getInstallRoot(c cfw.CFW) (string, error) {
+// getInstallRoot returns the top-level install directory.
+func getInstallRoot() (string, error) {
 	execPath, err := os.Executable()
 	if err != nil {
 		return "", fmt.Errorf("failed to get executable path: %w", err)
@@ -81,26 +53,14 @@ func getInstallRoot(c cfw.CFW) (string, error) {
 		return "", fmt.Errorf("failed to resolve executable path: %w", err)
 	}
 
-	// Number of directory levels up from the binary to the zip extraction root.
-	levels := 2
-	switch c {
-	case cfw.NextUI:
-		levels = 1 // zip has no wrapper dir
-	case cfw.Spruce, cfw.Allium, cfw.Onion, cfw.Trimui, cfw.Koriki:
-		levels = 3 // binary is nested: e.g. Grout.pak/grout/grout
-	}
-
-	root := execPath
-	for i := 0; i < levels; i++ {
-		root = filepath.Dir(root)
-	}
-	return root, nil
+	return filepath.Dir(execPath), nil
 }
 
 // CheckForUpdate checks for available updates based on the release channel.
 // For ReleaseChannelMatchRomM, the host parameter is required to fetch the RomM version.
 // For other channels, the host parameter is optional and ignored.
-func CheckForUpdate(c cfw.CFW, releaseChannel internal.ReleaseChannel, host *romm.Host) (*Info, error) {
+// CheckForUpdate checks for available updates based on the release channel.
+func CheckForUpdate(releaseChannel internal.ReleaseChannel, host *romm.Host) (*Info, error) {
 	currentVersion := version.Get().Version
 
 	if currentVersion == "dev" {
@@ -168,7 +128,7 @@ func CheckForUpdate(c cfw.CFW, releaseChannel internal.ReleaseChannel, host *rom
 		return info, nil
 	}
 
-	assetName := GetDistributionAssetName(c)
+	assetName := GetDistributionAssetName()
 	if assetName == "" {
 		return nil, fmt.Errorf("unsupported platform for updates")
 	}
@@ -186,8 +146,8 @@ func CheckForUpdate(c cfw.CFW, releaseChannel internal.ReleaseChannel, host *rom
 	return info, nil
 }
 
-func PerformUpdate(c cfw.CFW, downloadURL string, expectedSize int64, expectedSHA256 string, progress *atomic.Float64) error {
-	installRoot, err := getInstallRoot(c)
+func PerformUpdate(downloadURL string, expectedSize int64, expectedSHA256 string, progress *atomic.Float64) error {
+	installRoot, err := getInstallRoot()
 	if err != nil {
 		return err
 	}
@@ -218,48 +178,25 @@ func PerformUpdate(c cfw.CFW, downloadURL string, expectedSize int64, expectedSH
 
 	// Immediately replace the launch script so the new version
 	// (with the update preamble) is in place for next startup.
-	scriptRel := getLaunchScriptPath(c)
-	stagedScript := filepath.Join(updateDir, scriptRel)
-	targetScript := filepath.Join(installRoot, scriptRel)
+	scriptRel := getLaunchScriptPath()
+	if scriptRel != "" {
+		stagedScript := filepath.Join(updateDir, scriptRel)
+		targetScript := filepath.Join(installRoot, scriptRel)
 
-	if data, err := os.ReadFile(stagedScript); err == nil {
-		os.Remove(targetScript)
-		if err := os.WriteFile(targetScript, data, 0755); err != nil {
-			return fmt.Errorf("failed to update launch script: %w", err)
+		if data, err := os.ReadFile(stagedScript); err == nil {
+			os.Remove(targetScript)
+			if err := os.WriteFile(targetScript, data, 0755); err != nil {
+				return fmt.Errorf("failed to update launch script: %w", err)
+			}
+			os.Remove(stagedScript)
 		}
-		os.Remove(stagedScript)
 	}
 
 	return nil
 }
 
-func getLaunchScriptPath(c cfw.CFW) string {
-	switch c {
-	case cfw.NextUI:
-		return "launch.sh"
-	case cfw.MuOS:
-		return "Grout/mux_launch.sh"
-	case cfw.Knulli:
-		return "Grout/Grout.sh"
-	case cfw.Spruce:
-		return "Grout/launch.sh"
-	case cfw.ROCKNIX:
-		return "Grout.sh"
-	case cfw.Trimui:
-		return "Grout/launch.sh"
-	case cfw.Allium:
-		return "Grout.pak/launch.sh"
-	case cfw.Onion:
-		return "Grout/launch.sh"
-	case cfw.Koriki:
-		return "Grout/launch.sh"
-	case cfw.MinUI:
-		return "Grout.pak/launch.sh"
-	case cfw.Batocera:
-		return "Grout.sh"
-	default:
-		return ""
-	}
+func getLaunchScriptPath() string {
+	return "" // No launch script needed for desktop Flatpak
 }
 
 func extractZip(zipPath, destDir string) error {

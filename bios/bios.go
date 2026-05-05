@@ -3,8 +3,8 @@ package bios
 import (
 	"embed"
 	"fmt"
-	"grout/cfw"
 	"grout/internal/jsonutil"
+	"grout/platform"
 	"os"
 	"path/filepath"
 	"strings"
@@ -35,7 +35,7 @@ type CoreBIOS struct {
 }
 
 func SaveFile(biosFile File, platformFSSlug string, data []byte) error {
-	filePaths := cfw.GetBIOSFilePaths(biosFile.RelativePath, platformFSSlug)
+	filePaths := platform.GetCurrent().GetBIOSFilePaths(biosFile.RelativePath, platformFSSlug)
 
 	for _, filePath := range filePaths {
 		dir := filepath.Dir(filePath)
@@ -53,7 +53,7 @@ func SaveFile(biosFile File, platformFSSlug string, data []byte) error {
 
 // FileExists checks if a BIOS file exists on the filesystem for the given platform.
 func FileExists(biosFile File, platformFSSlug string) bool {
-	filePaths := cfw.GetBIOSFilePaths(biosFile.RelativePath, platformFSSlug)
+	filePaths := platform.GetCurrent().GetBIOSFilePaths(biosFile.RelativePath, platformFSSlug)
 	for _, filePath := range filePaths {
 		if _, err := os.Stat(filePath); err == nil {
 			return true

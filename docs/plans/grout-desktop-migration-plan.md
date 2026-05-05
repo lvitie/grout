@@ -149,19 +149,23 @@ Replace direct `cfw.GetCFW()`, `cfw.BaseSavePath()`, `cfw.ScanRoms()` calls with
 
 ---
 
-## Phase 2: New GUI Architecture
+## Phase 2: New GUI Architecture ✅
 
 - [x] Create `cmd/grout-desktop/main.go` entry point
 - [x] Create `desktop/router.go` with `adw.NavigationView`
-- [x] Create `desktop/controller/controller.go` skeleton with channel + `glib.IdleAdd` bridge
+- [x] Create `desktop/controller/controller.go` with evdev device discovery
 - [x] Move first-screen wiring from `router.go` to `main.go` (avoid `router.go` importing `screens`)
 - [x] Implement actual evdev device discovery (scan `/dev/input/event*` for gamepads)
 - [x] Implement `controller/mapping.go` — evdev event codes → Action mapping
 - [x] Create `desktop/state.go` — shared reactive app state (config, host, platforms)
+- [x] Create `desktop/util.go` — `EscapeMarkup()` helper for Pango-safe strings
 - [x] Create `desktop/widgets/game_row.go` — custom list row with artwork thumbnail
 - [x] Create `desktop/widgets/progress_overlay.go` — download/sync overlay
 - [x] Create `desktop/dialogs/confirmation.go` — `adw.MessageDialog` wrapper
 - [x] Create `desktop/dialogs/error.go` — error display helper
+- [x] Wire `cache.InitCacheManager()` in `main.go` activate flow (skip login if host saved)
+- [x] Fix `adw.NewApplicationWindow` to pass `&app.Application` (gotk4 type mismatch)
+- [x] Suppress CGo `free` warnings via `CGO_CFLAGS` in `flake.nix` shellHook
 
 ### 2.1 Project structure
 
@@ -402,30 +406,44 @@ go func() {
 - [x] `rebuild_cache.go` — cache rebuild UI
 - [x] `server_address.go` — edit server URL
 
-### 3.3 Screens needing functional wiring (stubs exist but not connected to backend)
+### 3.3 Functional wiring
 
 - [x] `login.go` — wire login button to `romm.NewClient()` + `ValidateConnection()` + save config
-- [x] `platform_selection.go` — wire to `cache.GetCacheManager().GetPlatforms()`
-- [x] `game_list.go` — wire to `cache.GetCacheManager().GetPlatformGames()` + artwork loading
-- [x] `game_list.go` — replace manual `FirstChild()`/`NextSibling()` search with `listBox.SetFilterFunc()`
-- [x] `game_details.go` — wire download button to actual download flow (Basic implementation exists)
+- [x] `platform_selection.go` — wire to `cache.GetCacheManager().GetPlatforms()` + live sync with progress
+- [x] `platform_selection.go` — `GtkStack`-based sync/list toggle with `startProgressMonitor()`
+- [x] `platform_selection.go` — filter platforms with 0 games, `EscapeMarkup()` on display strings
+- [x] `game_list.go` — wire to `cache.GetCacheManager().GetPlatformGames()` + `SetFilterFunc()`
+- [x] `game_details.go` — wire download button to actual download flow
 - [x] `settings.go` — wire switch changes to `internal.SaveConfig()`
+- [x] `rebuild_cache.go` — full wipe + re-sync with progress monitoring + "Done" button
+- [x] `tools_settings.go` — wire Rebuild Cache and Download Art rows to navigate to their screens
+- [x] `sync_history.go` — wire to `cm.GetSaveSyncHistory(deviceID)`
+- [x] `synced_games.go` — wire to `cm.GetSyncedRomIDs(deviceID)`
 
-### 3.4 Migration priority (by user flow)
+### 3.4 Remaining polish (app runs but these need work)
+
+- [ ] Artwork loading — download and display cover art in game rows and details
+- [ ] Game QR — render actual QR code as `GdkTexture` instead of placeholder icon
+- [ ] Collections — navigate from collection row to filtered game list
+- [ ] Download progress — show real-time download progress (currently jumps 0→100%)
+- [ ] Save sync — wire to actual `sync.StartSync()` flow
+- [ ] Game options — wire launch, delete, sync actions
+
+### 3.5 Migration priority (by user flow)
 
 | Priority | Screen | GTK4 widget | Status |
 |---|---|---|---|
-| 1 | Login | `adw.EntryRow` + `adw.PasswordEntryRow` | Done |
-| 2 | Platform Selection | `gtk.ListBox` + `adw.ActionRow` | Done |
-| 3 | Game List | `gtk.ListView` + factory | Done |
-| 4 | Game Details | `adw.Clamp` + cover image + metadata | Wired |
-| 5 | Settings | `adw.PreferencesPage` | Wired |
-| 6 | Download progress | `adw.StatusPage` + `gtk.ProgressBar` | Wired |
-| 7 | Search | `gtk.SearchEntry` + filter | Not started |
-| 8 | Save sync screens | `adw.StatusPage` + progress | Stub |
-| 9 | Collections | `gtk.ListBox` | Stub |
-| 10 | Remaining settings | `adw.PreferencesPage` | Not started |
-| 11 | Misc | Various | Not started |
+| 1 | Login | `adw.EntryRow` + `adw.PasswordEntryRow` | ✅ Functional |
+| 2 | Platform Selection | `gtk.Stack` + `gtk.ListBox` | ✅ Functional + sync |
+| 3 | Game List | `gtk.ListBox` + `SetFilterFunc` | ✅ Functional |
+| 4 | Game Details | `adw.Clamp` + cover image + metadata | ✅ Wired (no artwork yet) |
+| 5 | Settings | `adw.PreferencesPage` | ✅ Wired |
+| 6 | Download | `adw.StatusPage` + `gtk.ProgressBar` | ✅ Wired |
+| 7 | Search | `gtk.SearchEntry` + filter | ✅ Merged into game list |
+| 8 | Rebuild Cache | `adw.StatusPage` + progress | ✅ Fully functional |
+| 9 | Sync screens | `adw.StatusPage` + progress | Wired (basic) |
+| 10 | Collections | `gtk.ListBox` | Wired (no navigation) |
+| 11 | Remaining | Various | Stubs |
 
 ### 3.2 gabagool → GTK4 widget mapping
 
@@ -494,9 +512,10 @@ modules:
 - [x] Update `flake.nix` — SDL2 deps → GTK4 + libadwaita + gobject-introspection
 - [x] Update `go.mod` — add gotk4, gotk4-adwaita, go-evdev
 - [x] Remove gabagool, go-sdl2, certifiable from `go.mod`
-- [x] Fix duplicate `export HOME=$TMP` in `flake.nix` buildPhase (line 44)
-- [ ] Verify `nix build` compiles successfully
-- [ ] Verify `nix develop` shell loads all GTK4 deps
+- [x] Fix duplicate `export HOME=$TMP` in `flake.nix` buildPhase
+- [x] Add `CGO_CFLAGS="-Wno-builtin-declaration-mismatch"` to shellHook
+- [x] Verify `nix develop` shell loads all GTK4 deps — **app compiles and runs**
+- [ ] Verify `nix build` compiles successfully (clean sandbox build)
 
 ### 5.1 flake.nix changes
 
@@ -596,18 +615,16 @@ func GetLogger() *slog.Logger {
 
 ## Migration Timeline
 
-| Phase | Duration | Notes |
+| Phase | Status | Notes |
 |---|---|---|
-| Phase 0: Inventory | Done | This document |
-| Phase 1: Platform abstraction | 1-2 days | `platform/` package, update `sync/` |
-| Phase 2: GTK4 skeleton | 2-3 days | App, router, controller, window |
-| Phase 3: Screen migration | 2-3 weeks | 30+ screens, largest effort |
-| Phase 4: Flatpak packaging | 2-3 days | Manifest, testing |
-| Phase 5: Build system | 1 day | flake.nix, go.mod |
-| Phase 6: Logger migration | 1 day | Find-and-replace |
-| Phase 7: Cleanup | 1 day | Delete old code, update docs |
-
-**Total: ~4-5 weeks**
+| Phase 0: Inventory | ✅ Done | |
+| Phase 1: Platform abstraction | ✅ Done | `platform/` package, `sync/` updated |
+| Phase 2: GTK4 architecture | ✅ Done | Router, controller, state, widgets, dialogs |
+| Phase 3: Screen migration | 🟡 ~80% | 27 screens, core flow functional, polish remaining |
+| Phase 4: Flatpak packaging | 🟡 Manifest only | Needs Go SDK module, .desktop file, icon |
+| Phase 5: Build system | ✅ Done | `nix develop` + `go run` works |
+| Phase 6: Logger migration | ✅ Done | |
+| Phase 7: Cleanup | 🟡 ~90% | CI/CD + README remaining |
 
 ---
 

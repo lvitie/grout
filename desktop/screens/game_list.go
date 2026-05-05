@@ -3,6 +3,7 @@ package screens
 import (
 	"grout/cache"
 	"grout/desktop"
+	"grout/internal"
 	"grout/romm"
 	"strings"
 	"grout/desktop/widgets"
@@ -31,8 +32,14 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 	listBox.SetSelectionMode(gtk.SelectionSingle)
 	listBox.AddCSSClass("navigation-sidebar")
 
-	for _, g := range s.games {
-		row := widgets.NewGameRow(g)
+	// Filter and add rows
+	host := router.State().GetHost()
+	allGames := s.games
+	s.games = make([]romm.Rom, 0)
+	for _, g := range allGames {
+		s.games = append(s.games, g)
+		row := widgets.NewGameRowWithArt(g, host)
+		row.SetActivatable(true)
 		listBox.Append(row)
 	}
 
@@ -59,7 +66,11 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 
 	listBox.ConnectRowActivated(func(row *gtk.ListBoxRow) {
 		idx := row.Index()
-		router.Navigate(NewGameDetailsScreen(router, s.games[idx]))
+		if idx >= 0 && idx < len(s.games) {
+			game := s.games[idx]
+			internal.GetLogger().Info("Opening game details", "id", game.ID, "name", game.Name)
+			router.Navigate(NewGameDetailsScreen(router, game))
+		}
 	})
 
 	scrolled := gtk.NewScrolledWindow()

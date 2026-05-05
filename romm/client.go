@@ -8,6 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/http/cookiejar"
 	"strings"
 	"time"
 
@@ -15,7 +16,11 @@ import (
 )
 
 const (
-	DefaultClientTimeout = 30 * time.Second
+	DefaultClientTimeout = 5 * time.Minute // Increased for large ROM downloads
+)
+
+var (
+	defaultJar, _ = cookiejar.New(nil)
 )
 
 type Client struct {
@@ -53,9 +58,13 @@ func WithInsecureSkipVerify(skip bool) ClientOption {
 }
 
 func NewClient(baseURL string, opts ...ClientOption) *Client {
+	baseURL = strings.TrimSuffix(baseURL, "/")
+	baseURL = strings.TrimSuffix(baseURL, "/api")
+
 	c := &Client{
 		baseURL: strings.TrimSuffix(baseURL, "/"),
 		httpClient: &http.Client{
+			Jar:     defaultJar,
 			Timeout: DefaultClientTimeout,
 		},
 	}
@@ -279,4 +288,46 @@ func parseConflictError(body []byte) error {
 		ErrorType: "conflict",
 		Message:   string(body),
 	}
+}
+
+func (c *Client) doRequestStream(method, path string, body interface{}) (*http.Response, error) {
+	var reqBody io.Reader
+	if body != nil {
+		jsonData, err := json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		}
+		reqBody = bytes.NewBuffer(jsonData)
+	}
+
+	fullURL := c.baseURL + strings.ReplaceAll(path, " ", "%20")
+
+	req, err := http.NewRequest(method, fullURL, reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	if c.authHeader != "" {
+		req.Header.Set("Authorization", c.authHeader)
+	}
+
+	// Log the final URL for debugging
+	slog.Info("Executing RomM API stream request", "method", method, "url", req.URL.String())
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute request: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		defer resp.Body.Close()
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API error: status %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	return resp, nil
 }

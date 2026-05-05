@@ -10,6 +10,8 @@ type Platform interface {
 	ConfigDir() string // XDG_CONFIG_HOME/grout
 	CacheDir() string  // XDG_CACHE_HOME/grout
 	DataDir() string   // XDG_DATA_HOME/grout
+	BIOSDirectory() string
+	GetBIOSFilePaths(relativePath, platformFSSlug string) []string
 	ScanRoms(config RomScanConfig) LocalRomScan
 
 	GetArtDirectory(romDir string, platformFSSlug, platformName string) string

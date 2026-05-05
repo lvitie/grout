@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"grout/internal/artutil"
 	"grout/internal/fileutil"
+	"log/slog"
+	"net/http"
 	"net/url"
 	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
-	"log/slog"
-
 )
 
 const (
@@ -176,6 +176,42 @@ func (c *Client) GetRom(id int) (Rom, error) {
 func (c *Client) DownloadRom(id int) ([]byte, error) {
 	path := fmt.Sprintf(endpointRomContent, id)
 	return c.doRequestRaw("GET", path, nil)
+}
+
+func (c *Client) DownloadRomStream(rom Rom) (*http.Response, error) {
+	// Try the primary endpoint
+	path := fmt.Sprintf(endpointRomContent, rom.ID)
+	resp, err := c.doRequestStream("GET", path, nil)
+	if err == nil {
+		return resp, nil
+	}
+
+	// If 404, try fallbacks
+	if strings.Contains(err.Error(), "status 404") {
+		slog.Warn("Primary ROM download endpoint failed (404), trying fallbacks", "romID", rom.ID)
+
+		// Fallback 1: Append filename (some RomM versions require /api/roms/{id}/content/{filename})
+		if rom.FsName != "" {
+			pathWithFile := fmt.Sprintf("%s/%s", path, rom.FsName)
+			if resp2, err2 := c.doRequestStream("GET", pathWithFile, nil); err2 == nil {
+				return resp2, nil
+			}
+		}
+
+		// Fallback 2: Try /api/roms/{id}/file (alternative endpoint used in some versions)
+		pathFile := fmt.Sprintf("/api/roms/%d/file", rom.ID)
+		if resp3, err3 := c.doRequestStream("GET", pathFile, nil); err3 == nil {
+			return resp3, nil
+		}
+
+		// Fallback 3: Try /api/roms/{id}/download (v1/v2 legacy endpoint)
+		pathLegacy := fmt.Sprintf("/api/roms/%d/download", rom.ID)
+		if resp4, err4 := c.doRequestStream("GET", pathLegacy, nil); err4 == nil {
+			return resp4, nil
+		}
+	}
+
+	return nil, err
 }
 func joinPathWithQuery(base string, elem ...string) (string, error) {
 	last := elem[len(elem)-1]

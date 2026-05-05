@@ -2,7 +2,9 @@ package screens
 
 import (
 	"grout/desktop"
+	"grout/internal/artutil"
 	"grout/romm"
+
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
@@ -33,11 +35,19 @@ func (s *GameDetailsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	title.AddCSSClass("title-1")
 	box.Append(title)
 
-	// Placeholder for artwork
-	artPlaceholder := gtk.NewImage()
-	artPlaceholder.SetPixelSize(300)
-	artPlaceholder.SetFromIconName("image-missing-symbolic")
-	box.Append(artPlaceholder)
+	// Artwork — load from server
+	artImg := gtk.NewImage()
+	artImg.SetPixelSize(300)
+	artImg.SetFromIconName("image-missing-symbolic")
+	box.Append(artImg)
+
+	host := router.State().GetHost()
+	if host != nil {
+		artURL := s.game.GetArtworkURL(artutil.ArtKindDefault, *host)
+		if artURL != "" {
+			desktop.LoadImageAsync(artImg, artURL, 300)
+		}
+	}
 
 	desc := gtk.NewLabel(s.game.Summary)
 	desc.SetWrap(true)
