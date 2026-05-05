@@ -3,6 +3,7 @@ module grout
 go 1.25.6
 
 require (
+	fyne.io/systray v1.12.1
 	github.com/beevik/etree v1.6.0
 	github.com/bodgit/sevenzip v1.6.1
 	github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20250703085337-e94555b846b6
@@ -23,11 +24,11 @@ require (
 	github.com/bodgit/plumbing v1.3.0 // indirect
 	github.com/bodgit/windows v1.0.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/klauspost/compress v1.18.5 // indirect
 	github.com/mattn/go-isatty v0.0.21 // indirect
-	github.com/mattn/go-sqlite3 v1.14.44 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/nicksnyder/go-i18n/v2 v2.6.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.26 // indirect

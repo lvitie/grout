@@ -8,11 +8,14 @@ import (
 	"grout/desktop/screens"
 	"grout/internal"
 	"grout/platform"
+	"grout/resources"
 	"os"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"fyne.io/systray"
 )
 
 func main() {
@@ -26,8 +29,56 @@ func main() {
 	state := desktop.NewAppState()
 
 	app := adw.NewApplication("app.romm.Grout", 0)
+
+	var window *adw.ApplicationWindow
+
+	startTray, stopTray := systray.RunWithExternalLoop(func() {
+		iconBytes, err := resources.GetAppIconBytes()
+		if err == nil {
+			systray.SetIcon(iconBytes)
+		}
+		systray.SetTitle("Grout")
+		systray.SetTooltip("Grout — RomM Client")
+
+		mShow := systray.AddMenuItem("Show", "Show Grout window")
+		systray.AddSeparator()
+		mQuit := systray.AddMenuItem("Quit", "Quit Grout")
+
+		go func() {
+			for {
+				select {
+				case <-mShow.ClickedCh:
+					glib.IdleAdd(func() {
+						if window != nil {
+							window.SetVisible(true)
+							window.Present()
+						}
+					})
+				case <-mQuit.ClickedCh:
+					glib.IdleAdd(func() {
+						app.Quit()
+					})
+				}
+			}
+		}()
+	}, func() {})
+
 	app.ConnectActivate(func() {
-		activate(app, state)
+		window = activateWindow(app, state)
+		startTray()
+
+		window.ConnectCloseRequest(func() bool {
+			config := state.GetConfig()
+			if config != nil && config.ShouldCloseToTray() {
+				window.SetVisible(false)
+				return true
+			}
+			return false
+		})
+	})
+
+	app.ConnectShutdown(func() {
+		stopTray()
 	})
 
 	if code := app.Run(os.Args); code > 0 {
@@ -35,7 +86,7 @@ func main() {
 	}
 }
 
-func activate(app *adw.Application, state *desktop.AppState) {
+func activateWindow(app *adw.Application, state *desktop.AppState) *adw.ApplicationWindow {
 	window := adw.NewApplicationWindow(&app.Application)
 	window.SetTitle("Grout")
 	window.SetDefaultSize(1280, 720)
@@ -66,4 +117,5 @@ func activate(app *adw.Application, state *desktop.AppState) {
 	}
 
 	window.Present()
+	return window
 }

@@ -80,11 +80,20 @@ type Config struct {
 	SaveBackupLimit       int               `json:"save_backup_limit,omitempty"` // 0 = no limit, 5/10/15 = keep N most recent per game
 
 	PlatformsBinding map[string]string `json:"-"`
+
+	CloseToTray *bool `json:"close_to_tray,omitempty"`
 }
 
 type DirectoryMapping struct {
 	RomMSlug     string `json:"slug"`
 	RelativePath string `json:"relative_path"`
+}
+
+func (c Config) ShouldCloseToTray() bool {
+	if c.CloseToTray == nil {
+		return true // default: enabled (opt-out)
+	}
+	return *c.CloseToTray
 }
 
 func (c Config) ToLoggable() any {

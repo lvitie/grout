@@ -49,6 +49,17 @@ func (s *SettingsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	})
 	generalGroup.Add(unzipRow)
 
+	closeToTrayRow := adw.NewSwitchRow()
+	closeToTrayRow.SetTitle("Close to Tray")
+	closeToTrayRow.SetSubtitle("Keep running in the background when the window is closed")
+	closeToTrayRow.SetActive(s.config.ShouldCloseToTray())
+	closeToTrayRow.Connect("notify::active", func() {
+		val := closeToTrayRow.Active()
+		s.config.CloseToTray = &val
+		internal.SaveConfig(s.config)
+	})
+	generalGroup.Add(closeToTrayRow)
+
 	// Appearance Group
 	appearanceGroup := adw.NewPreferencesGroup()
 	appearanceGroup.SetTitle("Appearance")
@@ -76,6 +87,15 @@ func (s *SettingsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	moreGroup := adw.NewPreferencesGroup()
 	moreGroup.SetTitle("More")
 	page.Add(moreGroup)
+
+	saveSyncRow := adw.NewActionRow()
+	saveSyncRow.SetTitle("Save Sync")
+	saveSyncRow.SetSubtitle("Synchronize game saves with RomM")
+	saveSyncRow.SetActivatable(true)
+	saveSyncRow.ConnectActivated(func() {
+		router.Navigate(NewSyncMenuScreen(router))
+	})
+	moreGroup.Add(saveSyncRow)
 
 	advancedRow := adw.NewActionRow()
 	advancedRow.SetTitle("Advanced")

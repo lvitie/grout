@@ -28,7 +28,7 @@
           version = (builtins.fromJSON (builtins.readFile ./pak.json)).version;
           src = ./.;
 
-          vendorHash = "sha256-9PW3lf9knNVJEgroAvoueei92Y0RAxtrEjBPifdD1yc=";
+          vendorHash = "sha256-bZUUsUSBOX56hlnipS0jexqpwNMBGvKMjxQMw8rHi08=";
 
           nativeBuildInputs = with pkgs; [
             pkg-config
