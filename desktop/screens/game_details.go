@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
@@ -141,5 +142,12 @@ func (s *GameDetailsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	scrolled.SetChild(box)
 
 	page := adw.NewNavigationPage(scrolled, s.game.Name)
+	glib.IdleAdd(func() {
+		if installed {
+			uninstallBtn.GrabFocus()
+		} else {
+			downloadBtn.GrabFocus()
+		}
+	})
 	return page
 }

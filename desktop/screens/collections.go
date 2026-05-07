@@ -182,6 +182,17 @@ func (s *CollectionsScreen) Refresh() {
 	s.stack.SetVisibleChildName("list")
 }
 
+func (s *CollectionsScreen) FocusContent() {
+	if s.stack.VisibleChildName() == "grid" {
+		child := s.flowBox.ChildAtIndex(0)
+		if child != nil {
+			child.GrabFocus()
+		}
+	} else {
+		s.listBox.GrabFocus()
+	}
+}
+
 func (s *CollectionsScreen) ShowGridView() {
 	s.stack.SetVisibleChildName("grid")
 }

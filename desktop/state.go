@@ -102,3 +102,4 @@ func (s *AppState) NotifyInstalledChanged() {
 		l()
 	}
 }
+

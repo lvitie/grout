@@ -23,49 +23,46 @@ const (
 	ActionStart
 )
 
-// DefaultMapping provides a basic mapping for standard gamepads
-func MapEvent(ev evdev.InputEvent) Action {
-	// Standard Linux Gamepad API mapping
-	if ev.Type != evdev.EV_KEY {
-		return ActionNone
-	}
+// StickState tracks the current direction of each axis.
+type StickState struct {
+	axes map[evdev.EvCode]Action
+}
 
-	// Value 1 is press, 0 is release, 2 is repeat
-	if ev.Value == 0 {
-		return ActionNone
-	}
+func NewStickState() *StickState {
+	return &StickState{axes: make(map[evdev.EvCode]Action)}
+}
 
-	switch ev.Code {
-	case 304: // BTN_SOUTH (A)
-		return ActionConfirm
-	case 305: // BTN_EAST (B)
-		return ActionBack
-	case 307: // BTN_NORTH (X)
-		return ActionMenu
-	case 308: // BTN_WEST (Y)
-		return ActionAlt
-	case 310: // BTN_TL (L1)
-		return ActionL1
-	case 311: // BTN_TR (R1)
-		return ActionR1
-	case 312: // BTN_TL2 (L2)
-		return ActionL2
-	case 313: // BTN_TR2 (R2)
-		return ActionR2
-	case 314: // BTN_SELECT
-		return ActionSelect
-	case 315: // BTN_START
-		return ActionStart
-	// D-Pad is often EV_ABS (hat), but some use EV_KEY
-	case 103: // KEY_UP
-		return ActionUp
-	case 108: // KEY_DOWN
-		return ActionDown
-	case 105: // KEY_LEFT
-		return ActionLeft
-	case 106: // KEY_RIGHT
-		return ActionRight
-	}
+const stickCenter int32 = 32768
+const stickDeadzone int32 = 12000
 
+func (s *StickState) updateStick(code evdev.EvCode, value int32, neg, pos Action) {
+	centered := value - stickCenter
+	var current Action
+	if centered < -stickDeadzone {
+		current = neg
+	} else if centered > stickDeadzone {
+		current = pos
+	}
+	s.axes[code] = current
+}
+
+func (s *StickState) updateHat(code evdev.EvCode, value int32, neg, pos Action) {
+	var current Action
+	switch value {
+	case -1:
+		current = neg
+	case 1:
+		current = pos
+	}
+	s.axes[code] = current
+}
+
+// HeldAction returns the first non-None direction across all axes.
+func (s *StickState) HeldAction() Action {
+	for _, a := range s.axes {
+		if a != ActionNone {
+			return a
+		}
+	}
 	return ActionNone
 }

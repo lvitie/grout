@@ -52,3 +52,4 @@ site/
 /create-conflict
 /input_mapping.json
 /gamelist.xml
+.aider*

@@ -1,10 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"grout/cache"
 	"grout/desktop"
-	"grout/desktop/controller"
+	"grout/desktop/input"
 	"grout/desktop/screens"
 	"grout/internal"
 	"grout/platform"
@@ -23,7 +22,7 @@ func main() {
 	platform.SetCurrent(platform.NewLinuxDesktop())
 
 	// Initialize logger
-	internal.InitLogger(0) // Info level
+	internal.InitLogger(-4) // Debug level
 
 	// Initialize state
 	state := desktop.NewAppState()
@@ -99,14 +98,50 @@ func activateWindow(app *adw.Application, state *desktop.AppState) *adw.Applicat
 		theme.AddSearchPath("resources")
 	}
 
-	handler := controller.NewHandler()
-	handler.Start(func(action controller.Action) {
-		// Handle global actions here if needed
-		fmt.Printf("Action: %v\n", action)
-	})
-
 	// Create router and show first screen
 	router := desktop.NewRouter(window, state)
+
+	// Initialize input system (gamepad + keyboard)
+	inputMgr := input.NewManager(window, input.Callbacks{
+		Back: router.Back,
+		TabLeft: func() {
+			if router.TabLeftFn != nil {
+				router.TabLeftFn()
+			}
+		},
+		TabRight: func() {
+			if router.TabRightFn != nil {
+				router.TabRightFn()
+			}
+		},
+		ToggleView: func() {
+			if router.ToggleViewFn != nil {
+				router.ToggleViewFn()
+			}
+		},
+		QuickMenu: func() {
+			if router.QuickMenuFn != nil {
+				router.QuickMenuFn()
+			}
+		},
+		ExitSearch: func() bool {
+			if router.IsSearchActive == nil || !router.IsSearchActive() {
+				return false
+			}
+			router.ClearSearch()
+			return true
+		},
+		FocusContent: func() {
+			if router.FocusContent != nil {
+				router.FocusContent()
+			}
+		},
+	})
+	inputMgr.Start()
+
+	window.ConnectDestroy(func() {
+		inputMgr.Stop()
+	})
 
 	host := state.GetHost()
 	if host != nil {

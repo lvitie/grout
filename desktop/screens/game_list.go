@@ -2,6 +2,7 @@ package screens
 
 import (
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"grout/cache"
 	"grout/desktop"
@@ -209,6 +210,9 @@ func (s *GameListScreen) Build(router *desktop.Router) gtk.Widgetter {
 	box.Append(stack)
 
 	page := adw.NewNavigationPage(box, s.title)
+	glib.IdleAdd(func() {
+		listBox.GrabFocus()
+	})
 	return page
 }
 

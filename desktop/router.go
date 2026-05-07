@@ -6,9 +6,17 @@ import (
 )
 
 type Router struct {
-	window *adw.ApplicationWindow
-	nav    *adw.NavigationView
-	state  *AppState
+	window      *adw.ApplicationWindow
+	nav         *adw.NavigationView
+	state       *AppState
+	TabLeftFn      func()
+	TabRightFn     func()
+	SearchFn       func()
+	ToggleViewFn   func()
+	QuickMenuFn    func()
+	IsSearchActive func() bool
+	ClearSearch    func()
+	FocusContent   func()
 }
 
 type Screen interface {

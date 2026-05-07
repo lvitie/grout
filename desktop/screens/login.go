@@ -8,6 +8,7 @@ import (
 	"grout/romm"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
@@ -82,5 +83,8 @@ func (s *LoginScreen) Build(router *desktop.Router) gtk.Widgetter {
 	clamp.SetChild(box)
 
 	page := adw.NewNavigationPage(clamp, "Login")
+	glib.IdleAdd(func() {
+		urlRow.GrabFocus()
+	})
 	return page
 }

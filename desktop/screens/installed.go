@@ -167,6 +167,17 @@ func (s *InstalledScreen) rebuildUI() {
 	s.stack.SetVisibleChildName("list")
 }
 
+func (s *InstalledScreen) FocusContent() {
+	if s.stack.VisibleChildName() == "grid" {
+		child := s.flowBox.ChildAtIndex(0)
+		if child != nil {
+			child.GrabFocus()
+		}
+	} else {
+		s.listBox.GrabFocus()
+	}
+}
+
 func (s *InstalledScreen) ShowGridView() {
 	s.stack.SetVisibleChildName("grid")
 }

@@ -31,6 +31,7 @@ type PlatformSelectionScreen struct {
 	outerStack        *gtk.Stack
 	progressBar       *gtk.ProgressBar
 	listBox           *gtk.ListBox
+	flowBox           *gtk.FlowBox
 	platformListStack *gtk.Stack
 	collectionsScreen *CollectionsScreen
 	installedScreen   *InstalledScreen
@@ -203,12 +204,150 @@ func (s *PlatformSelectionScreen) Build(router *desktop.Router) gtk.Widgetter {
 	})
 	header.PackEnd(settingsBtn)
 
+	// Controller hints footer
+	footer := gtk.NewBox(gtk.OrientationHorizontal, 24)
+	footer.SetHAlign(gtk.AlignCenter)
+	footer.SetMarginTop(4)
+	footer.SetMarginBottom(4)
+	footer.AddCSSClass("dim-label")
+	for _, hint := range []string{"LB/RB  Tabs", "Select  View", "Start  Menu", "A  Select", "B  Back"} {
+		lbl := gtk.NewLabel(hint)
+		lbl.AddCSSClass("caption")
+		footer.Append(lbl)
+	}
+
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	box.Append(header)
 	box.Append(s.outerStack)
+	box.Append(footer)
+
+	// Wire controller callbacks to the router
+	tabNames := []string{"platforms", "collections", "installed"}
+	router.TabLeftFn = func() {
+		current := s.stack.VisibleChildName()
+		for i, name := range tabNames {
+			if name == current && i > 0 {
+				s.stack.SetVisibleChildName(tabNames[i-1])
+				return
+			}
+		}
+	}
+	router.TabRightFn = func() {
+		current := s.stack.VisibleChildName()
+		for i, name := range tabNames {
+			if name == current && i < len(tabNames)-1 {
+				s.stack.SetVisibleChildName(tabNames[i+1])
+				return
+			}
+		}
+	}
+	router.ToggleViewFn = func() {
+		toggleBtn.Activate()
+	}
+	router.SearchFn = func() {
+		searchBar.GrabFocus()
+	}
+	router.IsSearchActive = func() bool {
+		return searchBar.Text() != ""
+	}
+	router.ClearSearch = func() {
+		searchBar.SetText("")
+	}
+	router.FocusContent = func() {
+		// If search results are showing, focus them
+		if s.outerStack.VisibleChildName() == "search" {
+			if row := s.collectionsBox.RowAtIndex(0); row != nil {
+				row.GrabFocus()
+				return
+			}
+			if row := s.gamesBox.RowAtIndex(0); row != nil {
+				row.GrabFocus()
+				return
+			}
+			return
+		}
+
+		tab := s.stack.VisibleChildName()
+		switch tab {
+		case "collections":
+			s.collectionsScreen.FocusContent()
+		case "installed":
+			s.installedScreen.FocusContent()
+		default:
+			if s.platformListStack.VisibleChildName() == "grid" {
+				child := s.flowBox.ChildAtIndex(0)
+				if child != nil {
+					child.GrabFocus()
+				}
+			} else {
+				s.listBox.GrabFocus()
+			}
+		}
+	}
+	router.QuickMenuFn = func() {
+		s.showQuickMenu(router, searchBar)
+	}
 
 	page := adw.NewNavigationPage(box, "Grout")
+	glib.IdleAdd(func() {
+		s.listBox.GrabFocus()
+	})
 	return page
+}
+
+func (s *PlatformSelectionScreen) showQuickMenu(router *desktop.Router, searchBar *gtk.SearchEntry) {
+	listBox := gtk.NewListBox()
+	listBox.SetSelectionMode(gtk.SelectionNone)
+	listBox.AddCSSClass("navigation-sidebar")
+
+	type menuItem struct {
+		label  string
+		action func()
+	}
+
+	items := []menuItem{
+		{"Search", func() { searchBar.GrabFocus() }},
+		{"Platforms", func() { s.stack.SetVisibleChildName("platforms") }},
+		{"Collections", func() { s.stack.SetVisibleChildName("collections") }},
+		{"Installed", func() { s.stack.SetVisibleChildName("installed") }},
+		{"Downloads", func() { router.Navigate(NewDownloadQueueScreen(router)) }},
+		{"Sync Library", func() {
+			s.stack.SetVisibleChildName("sync")
+			s.startSync(router)
+		}},
+		{"Settings", func() { router.Navigate(NewSettingsScreen(router)) }},
+	}
+
+	dialog := adw.NewDialog()
+	dialog.SetTitle("Quick Menu")
+	dialog.SetContentWidth(300)
+	dialog.SetContentHeight(350)
+
+	for _, item := range items {
+		item := item
+		row := adw.NewActionRow()
+		row.SetTitle(item.label)
+		row.SetActivatable(true)
+		row.ConnectActivated(func() {
+			dialog.Close()
+			item.action()
+		})
+		listBox.Append(row)
+	}
+
+	toolbarView := adw.NewToolbarView()
+	headerBar := adw.NewHeaderBar()
+	toolbarView.AddTopBar(headerBar)
+	toolbarView.SetContent(listBox)
+
+	dialog.SetChild(toolbarView)
+	dialog.Present(router.Window())
+
+	glib.IdleAdd(func() {
+		if row := listBox.RowAtIndex(0); row != nil {
+			row.GrabFocus()
+		}
+	})
 }
 
 func (s *PlatformSelectionScreen) buildListView(router *desktop.Router) gtk.Widgetter {
@@ -231,7 +370,8 @@ func (s *PlatformSelectionScreen) buildListView(router *desktop.Router) gtk.Widg
 	listScrolled.SetHExpand(true)
 
 	// Grid view for platforms
-	flowBox := gtk.NewFlowBox()
+	s.flowBox = gtk.NewFlowBox()
+	flowBox := s.flowBox
 	flowBox.SetSelectionMode(gtk.SelectionSingle)
 	flowBox.SetMinChildrenPerLine(2)
 	flowBox.SetMaxChildrenPerLine(10)

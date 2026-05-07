@@ -2,6 +2,7 @@ package screens
 
 import (
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"grout/desktop"
 	"grout/internal"
@@ -92,5 +93,8 @@ func (s *SettingsScreen) Build(router *desktop.Router) gtk.Widgetter {
 	moreGroup.Add(toolsRow)
 
 	navPage := adw.NewNavigationPage(page, "Settings")
+	glib.IdleAdd(func() {
+		closeToTrayRow.GrabFocus()
+	})
 	return navPage
 }
